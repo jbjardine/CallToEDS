@@ -1,0 +1,66 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: call2eds
+      POSTGRES_PASSWORD: call2eds
+      POSTGRES_DB: call2eds
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: call2eds
+      MINIO_ROOT_PASSWORD: call2edssecret
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - miniostore:/data
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >-
+      /bin/sh -c "
+      until (/usr/bin/mc alias set local http://minio:9000 call2eds call2edssecret) do echo 'waiting for minio' && sleep 3; done;
+      /usr/bin/mc mb -p local/call2eds || true;
+      /usr/bin/mc anonymous set download local/call2eds;
+      "
+
+  app:
+    build: .
+    depends_on:
+      - postgres
+      - minio-init
+    env_file:
+      - .env.secrets
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://call2eds:call2eds@postgres:5432/call2eds
+      MINIO_ENDPOINT: minio:9000
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-http://docker.jardine.app:19000}
+      MINIO_ACCESS_KEY: call2eds
+      MINIO_SECRET_KEY: call2edssecret
+      MINIO_BUCKET: call2eds
+      MINIO_SECURE: "false"
+      LOG_LEVEL: INFO
+      CALL2EDS_WEB_HOST: 0.0.0.0
+      CALL2EDS_WEB_PORT: 8000
+      CALL2EDS_MAX_SPK: "6"
+      PYTHONPATH: /workspace/src
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    # entrypoint = call2eds (Dockerfile). On lance le sous-commande web.
+    command: ["web", "--host", "0.0.0.0", "--port", "8000"]
+
+volumes:
+  pgdata:
+  miniostore:

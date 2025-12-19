@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call2EDS</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+<body class="section">
+  <div class="container">
+    <h1 class="title">Call2EDS – Console</h1>
+
+    <div class="box">
+      <h2 class="subtitle">Ingestion rapide</h2>
+      <form action="/ingest" method="post" enctype="multipart/form-data">
+        <div class="field">
+          <label class="label">Audio</label>
+          <div class="control"><input class="input" type="file" name="audio" required></div>
+        </div>
+        <div class="columns">
+          <div class="column">
+            <label class="label">call_id (optionnel)</label>
+            <input class="input" type="text" name="call_id" placeholder="auto">
+          </div>
+          <div class="column">
+            <label class="label">Langue</label>
+            <input class="input" type="text" name="lang" placeholder="fr">
+          </div>
+          <div class="column">
+            <label class="label">Modèle</label>
+            <input class="input" type="text" name="model" placeholder="tiny/small/medium/large">
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Horodatage manuel (optionnel)</label>
+          <input class="input" type="datetime-local" name="when">
+        </div>
+        <div class="control">
+          <button class="button is-primary" type="submit">Lancer</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="box">
+      <h2 class="subtitle">Batch CSV</h2>
+      <p class="content is-small">CSV colonnes : audio_path,call_id,lang,model,when (optionnel). Vous pouvez ajouter les fichiers audio associés.</p>
+      <form action="/ingest-batch" method="post" enctype="multipart/form-data">
+        <div class="field">
+          <label class="label">CSV</label>
+          <div class="control"><input class="input" type="file" name="file_csv" required></div>
+        </div>
+        <div class="field">
+          <label class="label">Fichiers audio (optionnel, multi)</label>
+          <div class="control"><input class="input" type="file" name="audios" multiple></div>
+        </div>
+        <button class="button is-link" type="submit">Importer CSV</button>
+      </form>
+    </div>
+
+    <div class="box">
+      <h2 class="subtitle">Rechercher des runs</h2>
+      <form method="get" action="/">
+        <div class="field has-addons">
+          <p class="control is-expanded">
+            <input class="input" type="text" name="call_id" placeholder="call_id" value="{{ call_id or '' }}" required>
+          </p>
+          <p class="control">
+            <button class="button is-info" type="submit">Voir</button>
+          </p>
+        </div>
+      </form>
+    </div>
+
+    {% if runs %}
+    <div class="box">
+      <h2 class="subtitle">Runs pour {{ call_id }}</h2>
+      <table class="table is-striped is-fullwidth">
+        <thead><tr><th>run_id</th><th>créé</th><th>status</th><th>model</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for r in runs %}
+          <tr>
+            <td><code>{{ r.run_id }}</code></td>
+            <td>{{ r.created_at_h }}</td>
+            <td>{{ r.status }}</td>
+            <td>{{ r.model }}</td>
+            <td class="buttons">
+              <a class="button is-small is-info" href="/run/{{ call_id }}/{{ r.run_id }}">détails</a>
+              <a class="button is-small" href="/export/{{ call_id }}">manifest</a>
+              <a class="button is-small is-light" href="/export-zip/{{ call_id }}/{{ r.run_id }}">zip</a>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</body>
+</html>

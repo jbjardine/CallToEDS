@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Run {{ run_id }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <style>
+    body {background: linear-gradient(135deg,#f6f8fb 0%,#eef2f7 100%);}
+    .dialog-line {border-radius:14px; padding:12px 14px; margin-bottom:14px; box-shadow:0 4px 12px rgba(15,23,42,0.07);}
+    .dialog-meta {font-size:0.82rem; color:#475569; display:flex; gap:6px; flex-wrap:wrap;}
+    .bubble-0 {background: #e8f1ff; border-left:6px solid #3b82f6;}
+    .bubble-1 {background: #fff1f2; border-left:6px solid #f43f5e;}
+    .bubble-2 {background: #f0fdf4; border-left:6px solid #22c55e;}
+    .bubble-3 {background: #fff7ed; border-left:6px solid #fb923c;}
+    .dialog-text {font-size:1.05rem; margin:6px 0 4px;}
+    .prosody {font-size:0.8rem; color:#6b7280;}
+    .snippet {margin-top:6px;}
+    .snippet summary {cursor:pointer; font-size:0.85rem; color:#334155;}
+    .snippet-duration {font-size:0.8rem; color:#475569; margin-left:6px;}
+    .snippet audio {margin-top:6px; width:100%;}
+  </style>
+</head>
+<body class="section">
+  <div class="container">
+    <h1 class="title">Run {{ run_id }}</h1>
+    <p><a href="/?call_id={{ call_id }}">↩ Retour</a></p>
+
+    <div class="box">
+      <h2 class="subtitle">Manifest</h2>
+      <pre style="max-height:320px;overflow:auto;">{{ manifest | tojson(indent=2) }}</pre>
+    </div>
+
+    <div class="box">
+      <h2 class="subtitle">Artefacts (lien direct MinIO)</h2>
+      <table class="table is-striped is-fullwidth">
+        <thead><tr><th>Key</th><th>Taille</th><th>SHA256</th><th>Télécharger</th></tr></thead>
+        <tbody>
+        {% for a in artifacts %}
+          <tr>
+            <td><code>{{ a.key }}</code></td>
+            <td>{{ (a.size or 0)|int }} B</td>
+            <td><small>{{ a.sha256 }}</small></td>
+            <td><a class="button is-small" href="{{ a.url }}">DL</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if timeline %}
+    <div class="box">
+      <h2 class="subtitle">Dialogue (chronologique) + prosodie</h2>
+      {% set colors = ['is-primary','is-link','is-info','is-warning'] %}
+      {% for t in timeline %}
+        {% set tagcolor = colors[t.speaker_id % colors|length] %}
+        <div class="dialog-line bubble-{{ t.speaker_id % 4 }}">
+          <p class="dialog-meta">
+            <span class="tag {{ tagcolor }}">spk {{ t.speaker_id }}</span>
+            <span class="tag is-light">{{ "%.2f"|format(t.t_start) }}s → {{ "%.2f"|format(t.t_end) }}s</span>
+            <span class="tag is-light">conf {{ "%.2f"|format(t.asr_conf_turn) }}</span>
+            <span class="tag {{ t.arousal.color }}">{{ t.arousal.label }}</span>
+          </p>
+          <p class="dialog-text">{{ t.text }}</p>
+          <p class="prosody">
+            f0 {{ "%.1f"|format(t.f0_mean) }} Hz · énergie {{ "%.2f"|format(t.energy_mean) }} · voisé {{ "%.0f"|format(t.voiced_ratio*100) }}% · débit {{ "%.2f"|format(t.speech_rate_wps) }} w/s
+          </p>
+          <details class="snippet">
+            <summary>
+              🎧 Écouter l’extrait
+              <span class="snippet-duration" data-approx="{{ "%.2f"|format(t.clip_duration_s) }}">
+                (≈ {{ "%.2f"|format(t.clip_duration_s) }}s)
+              </span>
+            </summary>
+            <audio controls preload="metadata" data-clip="1" src="{{ t.audio_url }}"></audio>
+          </details>
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const audios = document.querySelectorAll("audio[data-clip]");
+      audios.forEach((audio) => {
+        const summary = audio.closest("details")?.querySelector(".snippet-duration");
+        const approx = summary?.getAttribute("data-approx");
+        if (summary && approx) summary.textContent = `(≈ ${approx}s)`;
+        audio.addEventListener("loadedmetadata", () => {
+          if (!summary) return;
+          const d = audio.duration;
+          if (Number.isFinite(d) && d > 0) {
+            summary.textContent = `(durée ${d.toFixed(2)}s)`;
+          }
+        });
+        // Force metadata load in most browsers
+        try { audio.load(); } catch (e) {}
+      });
+    });
+  </script>
+</body>
+</html>

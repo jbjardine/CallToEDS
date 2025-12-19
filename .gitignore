@@ -1,0 +1,21 @@
+__pycache__
+*.pyc
+.env
+.work
+.out
+*.parquet
+*.flac
+*.wav
+*.log
+*.sqlite
+.mypy_cache
+.pytest_cache
+.DS_Store
+.env.secrets
+.venv/
+.pytest_cache/
+out/
+out_noemie/
+raw/
+\\\"\", target)\""
+*target)*

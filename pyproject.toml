@@ -1,0 +1,73 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "call2eds"
+version = "0.1.0"
+description = "Pipeline audio -> paquet EDS (ASR, prosodie, Parquet, MinIO/Postgres)"
+authors = [{name = "CallToESD"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+dependencies = [
+    "typer[all]>=0.9.0",
+    "rich>=13.7.0",
+    "python-dotenv>=1.0.1",
+    # v1 explicit pour éviter le casse-tête Pydantic v2 en runtime (BaseSettings déplacé)
+    "pydantic==1.10.15",
+    "imageio-ffmpeg>=0.5.1",
+    "sqlalchemy>=2.0.23",
+    "psycopg2-binary>=2.9.9",
+    "boto3>=1.34.0",
+    "pandas>=2.1.0",
+    "pyarrow>=14.0.1",
+    "numpy>=1.26.2",
+    "scipy>=1.11.4",
+    "soundfile>=0.12.1",
+    "librosa>=0.10.1",
+    "faster-whisper==1.1.0",
+    "opensmile>=2.5.0",
+    "tqdm>=4.66.1",
+    "python-slugify>=8.0.1",
+    "shortuuid>=1.0.11",
+    "speechbrain>=1.0.0",
+    "torch>=2.2.0",
+    "torchaudio>=2.2.0",
+    "pyannote.audio>=3.2.0",
+    "webrtcvad>=2.0.10",
+    "pyworld>=0.3.4",
+    "uvloop>=0.19.0; platform_system == 'Linux'",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "jinja2>=3.1.3",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.8.0",
+    "ruff>=0.1.13",
+]
+
+[project.scripts]
+call2eds = "call2eds.cli.main:app"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+select = ["E", "F", "I", "B", "UP", "Q", "S", "W"]
+ignore = ["E203", "S311"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
