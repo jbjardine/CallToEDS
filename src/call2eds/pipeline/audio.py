@@ -45,9 +45,8 @@ def convert_audio(input_path: Path, workdir: Path) -> Tuple[Path, Path, List[Pat
     channel_paths: List[Path] = []
     is_stereo = False
     if audio_data.ndim == 1:
-        mono_path = workdir / "channel_0.wav"
-        sf.write(str(mono_path), audio_data, sr)
-        channel_paths.append(mono_path)
+        # Utilise le WAV mono déjà décodé par ffmpeg pour éviter les décalages
+        channel_paths.append(wav_mono)
     else:
         if audio_data.shape[1] == 2:
             # Détecte le "dual mono" (canaux très corrélés) et replie en mono
@@ -57,9 +56,8 @@ def convert_audio(input_path: Path, workdir: Path) -> Tuple[Path, Path, List[Pat
             corr = np.corrcoef(ch0, ch1)[0, 1] if rms0 > 0 and rms1 > 0 else 1.0
             delta = np.max(np.abs(ch0 - ch1))
             if corr > 0.9 and delta < 5e-2:
-                mono_path = workdir / "channel_0.wav"
-                sf.write(str(mono_path), (ch0 + ch1) / 2.0, sr)
-                channel_paths.append(mono_path)
+                # Dual-mono : préfère le mono ffmpeg pour une synchro fiable
+                channel_paths.append(wav_mono)
                 is_stereo = False
             else:
                 is_stereo = True

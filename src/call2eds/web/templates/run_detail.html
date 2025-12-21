@@ -12,6 +12,8 @@
     .bubble-1 {background: #fff1f2; border-left:6px solid #f43f5e;}
     .bubble-2 {background: #f0fdf4; border-left:6px solid #22c55e;}
     .bubble-3 {background: #fff7ed; border-left:6px solid #fb923c;}
+    .bubble-4 {background: #f5f3ff; border-left:6px solid #7c3aed;}
+    .bubble-5 {background: #ecfeff; border-left:6px solid #0ea5e9;}
     .dialog-text {font-size:1.05rem; margin:6px 0 4px;}
     .prosody {font-size:0.8rem; color:#6b7280;}
     .snippet {margin-top:6px;}
@@ -50,19 +52,22 @@
     {% if timeline %}
     <div class="box">
       <h2 class="subtitle">Dialogue (chronologique) + prosodie</h2>
-      {% set colors = ['is-primary','is-link','is-info','is-warning'] %}
+      {% set colors = ['is-primary','is-link','is-info','is-warning','is-success','is-danger'] %}
       {% for t in timeline %}
         {% set tagcolor = colors[t.speaker_id % colors|length] %}
-        <div class="dialog-line bubble-{{ t.speaker_id % 4 }}">
+        <div class="dialog-line bubble-{{ t.speaker_id % 6 }}">
           <p class="dialog-meta">
-            <span class="tag {{ tagcolor }}">spk {{ t.speaker_id }}</span>
+            <span class="tag {{ tagcolor }}">{{ t.speaker_label }}</span>
             <span class="tag is-light">{{ "%.2f"|format(t.t_start) }}s → {{ "%.2f"|format(t.t_end) }}s</span>
             <span class="tag is-light">conf {{ "%.2f"|format(t.asr_conf_turn) }}</span>
             <span class="tag {{ t.arousal.color }}">{{ t.arousal.label }}</span>
+            {% if t.overlap_ratio and t.overlap_ratio >= 0.25 %}
+              <span class="tag is-danger">chevauchement {{ "%.0f"|format(t.overlap_ratio*100) }}%</span>
+            {% endif %}
           </p>
           <p class="dialog-text">{{ t.text }}</p>
           <p class="prosody">
-            f0 {{ "%.1f"|format(t.f0_mean) }} Hz · énergie {{ "%.2f"|format(t.energy_mean) }} · voisé {{ "%.0f"|format(t.voiced_ratio*100) }}% · débit {{ "%.2f"|format(t.speech_rate_wps) }} w/s
+            f0 {{ "%.1f"|format(t.f0_mean) }} Hz · énergie {{ "%.1f"|format(t.energy_mean) }} dB · voisé {{ "%.0f"|format(t.voiced_ratio*100) }}% · débit {{ "%.2f"|format(t.speech_rate_wps) }} w/s
           </p>
           <details class="snippet">
             <summary>

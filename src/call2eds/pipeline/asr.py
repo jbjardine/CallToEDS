@@ -60,12 +60,18 @@ def transcribe_audio(
             logger.info("Fallback ASR sur device=%s (compute=%s)", dev, ct)
             model = WhisperModel(model_size, device=dev, compute_type=ct)
         try:
+            no_speech_threshold = float(os.getenv("CALL2EDS_NO_SPEECH_THRESHOLD", "0.9"))
+            log_prob_threshold = float(os.getenv("CALL2EDS_LOGPROB_THRESHOLD", "-1.0"))
+            vad_filter = os.getenv("CALL2EDS_VAD_FILTER", "false").strip().lower() in {"1", "true", "yes"}
             segments, info = model.transcribe(
                 str(wav_path),
                 beam_size=1,
                 language=language if language and language != "auto" else None,
                 word_timestamps=True,
                 condition_on_previous_text=False,  # réduit les répétitions / boucles
+                no_speech_threshold=no_speech_threshold,
+                log_prob_threshold=log_prob_threshold,
+                vad_filter=vad_filter,
             )
             break
         except Exception as e:  # noqa: BLE001

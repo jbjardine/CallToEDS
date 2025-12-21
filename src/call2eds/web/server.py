@@ -93,6 +93,8 @@ def _make_snippet(call_id: str, run_id: str, t0: float, t1: float) -> Path:
         "1",
         "-ar",
         "16000",
+        "-af",
+        "loudnorm=I=-16:TP=-1.5:LRA=11",
         "-vn",
         "-f",
         "mp3",
@@ -120,12 +122,14 @@ def _load_parquet_from_minio(key: str) -> pd.DataFrame:
 def _arousal_label(row: Dict) -> Dict:
     # Heuristique simple : combinaison f0, énergie, voisement
     f0 = float(row.get("f0_mean", 0.0) or 0.0)
-    energy = float(row.get("energy_mean", 0.0) or 0.0)
+    energy_db = float(row.get("energy_mean", 0.0) or 0.0)
     voiced = float(row.get("voiced_ratio", 0.0) or 0.0)
-    score = 0.5 * f0 + 0.4 * energy + 0.1 * voiced
-    if score < -0.5:
+    f0_norm = max(0.0, min(1.0, (f0 - 50.0) / 250.0))
+    energy_norm = max(0.0, min(1.0, (energy_db + 80.0) / 80.0))
+    score = 0.5 * f0_norm + 0.4 * energy_norm + 0.1 * voiced
+    if score < 0.35:
         return {"label": "calme", "color": "is-success", "score": score}
-    if score > 0.5:
+    if score > 0.65:
         return {"label": "énergique", "color": "is-danger", "score": score}
     return {"label": "neutre", "color": "is-warning", "score": score}
 
@@ -157,9 +161,12 @@ async def run_detail(call_id: str, run_id: str, request: Request):
             clip_start = max(0.0, t_start - pad)
             clip_end = t_end + pad
             clip_duration_s = max(0.0, clip_end - clip_start)
+            speaker_id = int(row.get("speaker_id", 0) or 0)
+            overlap_ratio = float(row.get("overlap_ratio", 0.0) or 0.0)
             timeline.append(
                 {
-                    "speaker_id": int(row.get("speaker_id", 0)),
+                    "speaker_id": speaker_id,
+                    "speaker_label": f"spk {speaker_id}" if speaker_id >= 0 else "overlap",
                     "t_start": t_start,
                     "t_end": t_end,
                     "text": row.get("text", ""),
@@ -169,6 +176,7 @@ async def run_detail(call_id: str, run_id: str, request: Request):
                     "voiced_ratio": float(row.get("voiced_ratio", 0.0)),
                     "speech_rate_wps": float(row.get("speech_rate_wps", 0.0)),
                     "arousal": ar,
+                    "overlap_ratio": overlap_ratio,
                     "audio_url": f"/audio/{call_id}/{run_id}?t0={clip_start:.2f}&t1={clip_end:.2f}",
                     "clip_duration_s": clip_duration_s,
                 }

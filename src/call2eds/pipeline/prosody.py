@@ -1,3 +1,4 @@
+import os
 import warnings
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -45,13 +46,46 @@ def _get_smile_column(df: pd.DataFrame, candidates: List[str]) -> pd.Series | No
 def _extract_frames_inner(wav_path: str, speaker_id: int) -> pd.DataFrame:
     import opensmile
     import soundfile as sf
+    import librosa
 
     y, sr = sf.read(wav_path)
     if y.ndim > 1:
         y = y.mean(axis=1)
 
-    # pyworld + yin fusion
-    pitch_df = fuse_pitch(y, sr)
+    # pitch backend (parselmouth > fuse)
+    backend = os.getenv("CALL2EDS_PITCH_BACKEND", "parselmouth").lower()
+    pitch_df = None
+    pitch_floor = float(os.getenv("CALL2EDS_PITCH_FLOOR", "50"))
+    pitch_ceil = float(os.getenv("CALL2EDS_PITCH_CEIL", "500"))
+    if backend == "parselmouth":
+        try:
+            import parselmouth
+
+            snd = parselmouth.Sound(y, sr)
+            pitch = snd.to_pitch_ac(
+                time_step=0.005,
+                pitch_floor=pitch_floor,
+                pitch_ceiling=pitch_ceil,
+            )
+            f0 = pitch.selected_array["frequency"]
+            t = pitch.xs()
+            try:
+                strength = pitch.selected_array["strength"]
+            except Exception:
+                strength = None
+            if strength is None or len(strength) == 0:
+                conf = (f0 > 0).astype(float)
+            else:
+                strength = np.nan_to_num(strength, nan=0.0)
+                smax = float(np.max(strength)) if np.size(strength) else 0.0
+                conf = strength / smax if smax > 0 else (f0 > 0).astype(float)
+            pitch_df = pd.DataFrame({"t": t, "f0_hz": f0, "pitch_conf": np.clip(conf, 0, 1)})
+        except Exception:
+            pitch_df = None
+
+    if pitch_df is None:
+        # pyworld + yin fusion fallback
+        pitch_df = fuse_pitch(y, sr)
     pitch_df["f0_hz"] = smooth_series(pitch_df["f0_hz"].to_numpy(), window=5)
     pitch_df["pitch_conf"] = smooth_series(pitch_df["pitch_conf"].to_numpy(), window=5)
 
@@ -67,10 +101,26 @@ def _extract_frames_inner(wav_path: str, speaker_id: int) -> pd.DataFrame:
     if pd.api.types.is_timedelta64_dtype(df_sm["t"]):
         df_sm["t"] = df_sm["t"].dt.total_seconds()
 
-    energy_col = _get_smile_column(df_sm, ["Loudness_sma3", "loudness_sma3", "pcm_RMSenergy_sma"])
-    energy = pd.to_numeric(energy_col, errors="coerce").fillna(0.0) if energy_col is not None else pd.Series([0.0] * len(df_sm))
+    # align pitch and smile times by merge nearest
+    merged = pd.merge_asof(pitch_df.sort_values("t"), df_sm.sort_values("t"), on="t", direction="nearest")
+
+    # energy (dBFS) from RMS aligned to pitch times
+    hop_s = float(np.median(np.diff(merged["t"].to_numpy()))) if len(merged) > 1 else 0.01
+    hop_len = max(1, int(sr * hop_s))
+    frame_len = max(64, int(sr * 0.025))
+    rms = librosa.feature.rms(y=y, frame_length=frame_len, hop_length=hop_len)[0]
+    t_rms = librosa.frames_to_time(np.arange(len(rms)), sr=sr, hop_length=hop_len, n_fft=frame_len)
+    df_rms = pd.DataFrame({"t": t_rms, "energy_rms": rms})
+    energy_rms = pd.merge_asof(
+        pd.DataFrame({"t": merged["t"]}), df_rms, on="t", direction="nearest"
+    )["energy_rms"]
+    energy_rms = pd.to_numeric(energy_rms, errors="coerce").fillna(0.0)
+    energy_rms_db = 20 * np.log10(np.maximum(energy_rms.to_numpy(), 1e-8))
+    energy_rms_db = np.clip(energy_rms_db, -80.0, 0.0)
+    energy = pd.to_numeric(pd.Series(energy_rms_db), errors="coerce").fillna(-80.0)
+
     voicing_col = _get_smile_column(
-        df_sm,
+        merged,
         [
             "voicingFinalUnclipped_sma3nz",
             "voicingFinal_sma3nz",
@@ -78,15 +128,26 @@ def _extract_frames_inner(wav_path: str, speaker_id: int) -> pd.DataFrame:
             "VoicingFinalUnclipped_sma3nz",
         ],
     )
+    voicing = None
     if voicing_col is not None:
         voicing = pd.to_numeric(voicing_col, errors="coerce").fillna(0.0).clip(0.0, 1.0)
-    else:
-        voicing = (pitch_df["f0_hz"] > 0).astype(float)
+        try:
+            if float(voicing.std(skipna=True)) < 1e-3:
+                voicing = None
+        except Exception:
+            voicing = None
+    if voicing is None:
+        f0 = pitch_df["f0_hz"].to_numpy()
+        conf = pitch_df["pitch_conf"].to_numpy()
+        try:
+            thr_db = float(np.nanpercentile(energy, 30))
+        except Exception:
+            thr_db = -80.0
+        voiced_mask = (conf >= 0.35) & (f0 > pitch_floor) & (f0 < pitch_ceil) & (energy > (thr_db - 3))
+        voicing = voiced_mask.astype(float)
 
-    # align pitch and smile times by merge nearest
-    merged = pd.merge_asof(pitch_df.sort_values("t"), df_sm.sort_values("t"), on="t", direction="nearest")
-    merged["energy"] = pd.to_numeric(energy, errors="coerce").fillna(0.0)
-    merged["voicing"] = voicing.values if len(voicing) == len(merged) else voicing.reindex(merged.index, fill_value=0.0)
+    merged["energy"] = energy.to_numpy()
+    merged["voicing"] = voicing.to_numpy() if len(voicing) == len(merged) else voicing.reindex(merged.index, fill_value=0.0)
 
     # pitch validity
     energy_norm = merged["energy"].to_numpy()
@@ -100,7 +161,7 @@ def _extract_frames_inner(wav_path: str, speaker_id: int) -> pd.DataFrame:
     except Exception:
         energy_norm *= 0
     energy_norm = np.clip(energy_norm, 0.0, 1.0)
-    pitch_valid = 0.5 * merged["pitch_conf"].to_numpy() + 0.3 * merged["voicing"].to_numpy() + 0.2 * energy_norm
+    pitch_valid = 0.4 * merged["pitch_conf"].to_numpy() + 0.4 * merged["voicing"].to_numpy() + 0.2 * energy_norm
 
     return pd.DataFrame(
         {
@@ -134,6 +195,8 @@ def aggregate_words(tokens: pd.DataFrame, frames: pd.DataFrame) -> pd.DataFrame:
     tokens_sorted = tokens.sort_values(["turn_id", "token_id"]).reset_index(drop=True)
     for _, tok in tokens_sorted.iterrows():
         mask = (frames["t"] >= tok.t_start) & (frames["t"] <= tok.t_end)
+        if "speaker_id" in frames.columns and "speaker_id" in tok and pd.notna(tok.speaker_id):
+            mask &= frames["speaker_id"] == int(tok.speaker_id)
         sub = frames[mask]
         f0_mean = sub.f0_hz.mean() if not sub.empty else 0.0
         f0_std = sub.f0_hz.std(ddof=0) if not sub.empty else 0.0
@@ -180,6 +243,8 @@ def aggregate_turns(turns: pd.DataFrame, tokens: pd.DataFrame, frames: pd.DataFr
         duration = turn.t_end - turn.t_start
         tok_turn = tokens[tokens.turn_id == turn.turn_id]
         frames_turn = frames[(frames.t >= turn.t_start) & (frames.t <= turn.t_end)]
+        if "speaker_id" in frames.columns and "speaker_id" in turn and pd.notna(turn.speaker_id):
+            frames_turn = frames_turn[frames_turn["speaker_id"] == int(turn.speaker_id)]
         speech_rate = len(tok_turn) / duration if duration > 0 else 0
         silence_ratio = 1 - ((frames_turn.voicing > 0.5).mean() if not frames_turn.empty else 0)
         pitch_valid_ratio = (frames_turn.pitch_conf > 0.5).mean() if not frames_turn.empty else 0
