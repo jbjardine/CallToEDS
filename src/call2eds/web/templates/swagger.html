@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call2EDS</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #0e1626;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --line: #1f2937;
+      --accent: #22c55e;
+      --accent-2: #06b6d4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 600px at 15% -10%, #1e293b 0%, transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, #164e63 0%, transparent 60%),
+        var(--bg);
+    }
+    .page { max-width: 1600px; width: 100%; margin: 0 auto; padding: 28px 24px 40px; }
+    .topbar { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom: 18px; flex-wrap: wrap; }
+    .title { font-family:"Space Grotesk", sans-serif; font-size:24px; margin:0 0 6px; }
+    .subtitle { color: var(--muted); margin:0; font-size:13px; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; margin-left:auto; flex:1 1 320px; }
+    .actions > * { white-space: nowrap; }
+    .btn {
+      text-decoration:none; color:var(--text);
+      padding:8px 12px; border-radius:10px;
+      border:1px solid var(--line); font-size:12px;
+      background: transparent; transition:0.2s ease;
+    }
+    .btn:hover { border-color: var(--accent-2); color:#e2f9ff; }
+    .panel {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(11, 18, 32, 0.95));
+      border:1px solid var(--line); border-radius:16px; padding:16px;
+      box-shadow: 0 18px 40px rgba(2,6,23,0.45);
+      margin-bottom: 18px;
+    }
+    .panel h2 { font-family:"Space Grotesk", sans-serif; font-size:16px; margin:0 0 8px; }
+    .note { color: var(--muted); font-size: 12px; margin: 6px 0 0; }
+    .quickstart { display:grid; gap:8px; font-size:12px; }
+    .quickstart code { color:#a5f3fc; }
+    .snippet { display:grid; gap:6px; }
+    .snippet pre { margin: 0; white-space: pre-wrap; background: #0b1220; border: 1px solid var(--line); border-radius: 12px; padding: 10px; font-size: 11px; color: #cbd5f5; }
+    .snippet .btn { width: fit-content; }
+    #swagger-ui { background: transparent; }
+    .swagger-ui {
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      color: var(--text);
+    }
+    .swagger-ui .topbar { display:none; }
+    .swagger-ui .info .title { color: var(--text); }
+    .swagger-ui .info .description, .swagger-ui .info a { color: #cbd5f5; }
+    .swagger-ui .opblock { background: #0b1220; border:1px solid var(--line); }
+    .swagger-ui .opblock-summary { border-bottom: 1px solid var(--line); }
+    .swagger-ui .opblock-tag { color: #e2f9ff; }
+    .swagger-ui .opblock .opblock-section-header { background: #0b1220; }
+    .swagger-ui .response-col_status { color: #cbd5f5; }
+    .swagger-ui .btn { border-color: var(--line); }
+    .swagger-ui .scheme-container { background: transparent; box-shadow: none; }
+    .swagger-ui .model-box, .swagger-ui .model { background: #0b1220; color: #cbd5f5; }
+    .swagger-ui .tab li { color:#cbd5f5; }
+    .swagger-ui .opblock .opblock-summary-method { border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div>
+        <h1 class="title">API Docs - Call2EDS</h1>
+        <p class="subtitle">Swagger UI propre, exemples intégrés, et auth rapide.</p>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/" >Retour</a>
+        <a class="btn" href="/diagnostic">Paramètres & état</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2>Auth quickstart</h2>
+      <div class="quickstart">
+        <div>1) <code>/access</code> → Activer la sécurité</div>
+        <div>2) <code>/setup</code> → créer l'admin</div>
+        <div>3) <code>/login</code> → se connecter</div>
+        <div>4) API → <code>X-API-Key</code> ou <code>Authorization: Bearer &lt;key&gt;</code></div>
+      </div>
+      <p class="note">Utilisez le bouton Authorize pour saisir un user/password (Basic) ou une clé API.</p>
+      <p class="note">Si l'auth est activée, les endpoints <code>/api/auth/*</code> requièrent un admin.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Auth examples</h2>
+      <div class="quickstart">
+        <div class="snippet">
+          <div>Login (cookie session)</div>
+          <button class="btn copy-btn" data-copy="curl -s -X POST {{'{{'}}BASE_URL{{'}}'}}/api/auth/login \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"username\":\"admin\",\"password\":\"secret\"}'">Copier</button>
+          <pre><code>curl -s -X POST <span class="base-url"></span>/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"secret"}'</code></pre>
+        </div>
+        <div class="snippet">
+          <div>Créer un user</div>
+          <button class="btn copy-btn" data-copy="curl -s -X POST {{'{{'}}BASE_URL{{'}}'}}/api/auth/users \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"username\":\"viewer\",\"password\":\"changeme\",\"role\":\"viewer\",\"can_api\":true}'">Copier</button>
+          <pre><code>curl -s -X POST <span class="base-url"></span>/api/auth/users \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"viewer","password":"changeme","role":"viewer","can_api":true}'</code></pre>
+        </div>
+        <div class="snippet">
+          <div>Créer une clé API</div>
+          <button class="btn copy-btn" data-copy="curl -s -X POST {{'{{'}}BASE_URL{{'}}'}}/api/auth/keys \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"user_id\":1,\"name\":\"automation\"}'">Copier</button>
+          <pre><code>curl -s -X POST <span class="base-url"></span>/api/auth/keys \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":1,"name":"automation"}'</code></pre>
+        </div>
+        <div class="snippet">
+          <div>Appeler l’API avec clé</div>
+          <button class="btn copy-btn" data-copy="curl -s {{'{{'}}BASE_URL{{'}}'}}/api/system \\\n  -H 'X-API-Key: k_live_xxxxxxxxxxxxx'">Copier</button>
+          <pre><code>curl -s <span class="base-url"></span>/api/system \
+  -H 'X-API-Key: k_live_xxxxxxxxxxxxx'</code></pre>
+        </div>
+      </div>
+      <p class="note">Remplace <code>BASE_URL</code> par l’URL du serveur (auto‑détectée ci‑dessous).</p>
+    </section>
+
+    <section class="panel">
+      <div id="swagger-ui"></div>
+    </section>
+  </div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    const BASE_URL = window.location.origin;
+    document.querySelectorAll(".base-url").forEach((el) => {
+      el.textContent = BASE_URL;
+    });
+    document.querySelectorAll(".copy-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const raw = btn.getAttribute("data-copy") || "";
+        const text = raw.replace(/\\{\\{BASE_URL\\}\\}/g, BASE_URL);
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.textContent = "Copié";
+          setTimeout(() => (btn.textContent = "Copier"), 1200);
+        } catch (err) {
+          btn.textContent = "Erreur";
+          setTimeout(() => (btn.textContent = "Copier"), 1200);
+        }
+      });
+    });
+
+    window.ui = SwaggerUIBundle({
+      url: "{{ openapi_url }}",
+      dom_id: "#swagger-ui",
+      deepLinking: true,
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+      layout: "BaseLayout",
+      displayRequestDuration: true,
+      docExpansion: "list",
+      defaultModelsExpandDepth: -1,
+      defaultModelExpandDepth: 2,
+      persistAuthorization: true
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call2EDS</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #0b1220;
+      --card: #0e1626;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --accent: #22c55e;
+      --accent-2: #06b6d4;
+      --warn: #f59e0b;
+      --line: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #1e293b 0%, transparent 60%),
+        radial-gradient(800px 500px at 90% 10%, #0f766e 0%, transparent 60%),
+        var(--bg);
+    }
+    .page {
+      max-width: 1600px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 24px 56px;
+    }
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      min-width: 240px;
+      max-width: 520px;
+    }
+    .brand h1 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 28px;
+      margin: 0 0 6px;
+      letter-spacing: 0.4px;
+    }
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      margin-left: auto;
+      flex: 1 1 420px;
+    }
+    .actions > * { white-space: nowrap; }
+    .actions select {
+      width: auto;
+      min-width: 120px;
+      margin: 0;
+    }
+    .hidden { display: none; }
+    .btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-size: 13px;
+      transition: 0.2s ease;
+    }
+    .btn:hover { border-color: var(--accent-2); color: #e2f9ff; }
+    .btn.primary {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
+      color: #06140a;
+      border: none;
+      font-weight: 600;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(11, 18, 32, 0.95));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 20px 45px rgba(2, 6, 23, 0.45);
+    }
+    .card h2 {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+    .card p { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+    input, select {
+      width: 100%;
+      background: #0b1220;
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    input[type="file"] { padding: 8px; }
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .inline-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .inline-row input { flex: 1; margin-bottom: 0; }
+    .inline-row .btn { margin-top: 18px; height: 36px; }
+    .mini {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.12);
+      color: #86efac;
+      font-size: 12px;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+    }
+    .history {
+      margin-top: 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    th { color: var(--muted); font-size: 12px; font-weight: 600; }
+    .row-link {
+      color: var(--accent-2);
+      text-decoration: none;
+    }
+    .row-actions .btn { padding: 6px 10px; font-size: 12px; }
+    .search-inline {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .badge {
+      background: rgba(6, 182, 212, 0.15);
+      color: #a5f3fc;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+    .badge.warn {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fcd34d;
+      border-color: rgba(245, 158, 11, 0.3);
+    }
+    .btn.disabled {
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    .footer-note {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .progress-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .progress-item {
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.65);
+    }
+    .progress-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: var(--muted);
+    }
+    .progress-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.15);
+      overflow: hidden;
+    }
+    .progress-bar span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #06b6d4);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <h1 data-i18n="title">Call2EDS - Console</h1>
+        <p data-i18n="subtitle">Console Call2EDS pour import, suivi runs & historique global.</p>
+      </div>
+      <div class="actions">
+        <span class="pill" id="health-pill">santé...</span>
+        <span class="pill" id="gpu-pill">GPU...</span>
+        <select id="uiLang">
+          <option value="fr">FR</option>
+          <option value="en">EN</option>
+        </select>
+        <a class="btn" href="{{ minio_console_url }}" target="_blank" rel="noopener" data-minio-link data-minio-default="{{ minio_console_url }}" data-i18n="minio_console">MinIO Console</a>
+        <a class="btn" href="/docs" data-i18n="api_docs">API (Swagger)</a>
+        <a class="btn" href="/diagnostic" data-i18n="diagnostic">Diagnostic</a>
+        <a class="btn" href="/access" data-i18n="access">Accès</a>
+        {% if user %}
+          <span class="pill">{{ user.username }}</span>
+          <a class="btn" href="/logout" data-i18n="logout">Se déconnecter</a>
+        {% else %}
+          <a class="btn" href="/login" data-i18n="login">Connexion</a>
+        {% endif %}
+        <a class="btn primary" href="#history" data-i18n="history">Historique</a>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <h2 data-i18n="quick_ingest">Import rapide</h2>
+        <form action="/ingest" method="post" enctype="multipart/form-data">
+          <label data-i18n="audio">Audio</label>
+          <input type="file" name="audio" required>
+          <div class="field-row">
+            <div>
+              <label data-i18n="call_id_optional">call_id (optionnel)</label>
+              <input type="text" name="call_id" placeholder="auto">
+            </div>
+            <div>
+              <label data-i18n="asr_lang">Langue système (ASR)</label>
+              <select name="lang">
+                {% set lang_default = default_lang or "fr" %}
+                <option value="auto" {% if lang_default == "auto" %}selected{% endif %}>auto</option>
+                <option value="fr" {% if lang_default == "fr" %}selected{% endif %}>fr</option>
+                <option value="en" {% if lang_default == "en" %}selected{% endif %}>en</option>
+                <option value="es" {% if lang_default == "es" %}selected{% endif %}>es</option>
+                <option value="de" {% if lang_default == "de" %}selected{% endif %}>de</option>
+                <option value="it" {% if lang_default == "it" %}selected{% endif %}>it</option>
+                <option value="pt" {% if lang_default == "pt" %}selected{% endif %}>pt</option>
+                <option value="ar" {% if lang_default == "ar" %}selected{% endif %}>ar</option>
+                <option value="ru" {% if lang_default == "ru" %}selected{% endif %}>ru</option>
+                <option value="zh" {% if lang_default == "zh" %}selected{% endif %}>zh</option>
+              </select>
+            </div>
+            <div>
+              <label data-i18n="model">Modèle</label>
+              <select name="model" id="modelSelect">
+                {% set model_default = default_model or "small" %}
+                <option value="" {% if not model_default %}selected{% endif %}>auto</option>
+                <option value="tiny" {% if model_default == "tiny" %}selected{% endif %}>tiny</option>
+                <option value="small" {% if model_default == "small" %}selected{% endif %}>small</option>
+                <option value="medium" {% if model_default == "medium" %}selected{% endif %}>medium</option>
+                <option value="large" {% if model_default == "large" %}selected{% endif %}>large</option>
+              </select>
+              <p class="mini" data-i18n="model_help" data-i18n-default="{{ default_model }}">Par défaut : {{ default_model }}. Plus le modèle est grand, plus la qualité est élevée (et plus lent).</p>
+            </div>
+          </div>
+          <label data-i18n="timestamp_optional">Horodatage manuel (optionnel)</label>
+          <input type="datetime-local" name="when">
+          <button class="btn primary" type="submit" data-i18n="launch">Lancer</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="batch_csv">Import CSV</h2>
+        <p data-i18n="csv_help">CSV colonnes : audio_path,call_id,lang,model,when. Si un modèle n’est pas présent, il sera téléchargé automatiquement.</p>
+        <form action="/ingest-batch" method="post" enctype="multipart/form-data">
+          <label data-i18n="csv_file">CSV</label>
+          <input type="file" name="file_csv" required>
+          <label data-i18n="audio_optional_multi">Fichiers audio (optionnel, multi)</label>
+          <input type="file" name="audios" multiple>
+          <button class="btn" type="submit" data-i18n="import_csv">Importer CSV</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="search_call">Recherche par call_id</h2>
+        <form method="get" action="/">
+          <label data-i18n="call_id">call_id</label>
+          <input type="text" name="call_id" placeholder="ex: SIMSAMU_001" value="{{ call_id or '' }}" required>
+          <button class="btn" type="submit" data-i18n="view_runs">Voir runs</button>
+        </form>
+        {% if runs %}
+        <div class="search-inline">
+          <span class="badge">{{ runs|length }} runs</span>
+          <span class="mini" data-i18n="recent_runs" data-i18n-call="{{ call_id }}">Derniers runs pour {{ call_id }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="active_ingest">Traitements en cours</h2>
+        <p data-i18n="active_help">Suivi en direct des traitements (progression et étape).</p>
+        <div id="activeRuns" class="progress-list"></div>
+        <p class="footer-note" id="activeRunsEmpty" data-i18n="active_none">Aucun ingest en cours.</p>
+      </div>
+
+      <div class="card">
+        <h2 data-i18n="storage">Stockage MinIO</h2>
+        <p data-i18n="storage_help">Parcourt l’historique complet, artefacts, audio et exports.</p>
+        <div class="search-inline">
+          <a class="btn" href="{{ minio_console_url }}" target="_blank" rel="noopener" data-minio-link data-minio-default="{{ minio_console_url }}" data-i18n="open_console">Ouvrir console</a>
+        </div>
+        <p class="footer-note">Bucket: <code>{{ minio_bucket }}</code></p>
+      </div>
+    </section>
+
+    {% if runs %}
+    <section class="card" id="callRunsSection">
+      <h2 data-i18n="runs_for" data-i18n-call="{{ call_id }}">Runs pour {{ call_id }}</h2>
+      <div class="search-inline">
+        <span class="badge" id="callRunsCount">{{ runs|length }} runs</span>
+        <button class="btn" type="button" id="callRunsToggle" data-i18n="toggle_runs_show">Afficher runs</button>
+      </div>
+      <div id="callRunsPanel">
+        <label data-i18n="call_runs_filter_label">Filtrer (run_id / model / status)</label>
+        <div class="field-row">
+          <input type="text" id="callRunsFilter" placeholder="ex: small / ok" data-i18n-placeholder="call_runs_filter_placeholder">
+          <select id="callRunsModel">
+            <option value="" data-i18n="all_models">Tous modèles</option>
+          </select>
+          <select id="callRunsStatus">
+            <option value="" data-i18n="all_status">Tous status</option>
+          </select>
+          <select id="callRunsSort">
+            <option value="created_desc" data-i18n="sort_date_desc">Date ↓</option>
+            <option value="created_asc" data-i18n="sort_date_asc">Date ↑</option>
+          </select>
+        </div>
+      <table>
+        <thead>
+          <tr>
+            <th data-i18n="th_run_id">run_id</th>
+            <th data-i18n="th_created">créé</th>
+            <th data-i18n="th_status">status</th>
+            <th data-i18n="th_model">model</th>
+            <th data-i18n="th_actions">actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in runs %}
+          <tr data-run="{{ r.run_id }}" data-model="{{ r.model }}" data-status="{{ r.status }}" data-created="{{ r.created_at }}">
+            <td><code>{{ r.run_id }}</code></td>
+            <td>{{ r.created_at_h }}</td>
+            <td>{{ r.status }}</td>
+            <td>{{ r.model }}</td>
+            <td class="row-actions">
+              {% if r.status == "completed" %}
+                <a class="btn" href="/run/{{ call_id }}/{{ r.run_id }}" data-i18n="details">détails</a>
+                <a class="btn" href="/export-zip/{{ call_id }}/{{ r.run_id }}" data-i18n="zip">zip</a>
+              {% else %}
+                <span class="badge warn" data-i18n="run_in_progress">en cours</span>
+                <span class="mini" data-i18n="run_not_ready">disponible après fin</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if recent_runs %}
+    <section class="card history" id="history">
+      <h2 data-i18n="global_history" data-i18n-count="{{ history_limit }}">Historique global ({{ history_limit }} derniers)</h2>
+      <label data-i18n="filter_label">Filtres (call_id / modèle / date)</label>
+      <div class="field-row">
+        <input type="text" id="historyFilter" placeholder="ex: SIMSAMU / small" data-i18n-placeholder="filter_placeholder">
+        <select id="historyModel">
+          <option value="" data-i18n="all_models">Tous modèles</option>
+        </select>
+        <input type="number" id="historyMinRuns" min="1" step="1" placeholder="Runs min" data-i18n-placeholder="min_runs_placeholder">
+        <select id="historySort">
+          <option value="created_desc" data-i18n="sort_date_desc">Date ↓</option>
+          <option value="created_asc" data-i18n="sort_date_asc">Date ↑</option>
+          <option value="call_asc" data-i18n="sort_call_asc">Call ↑</option>
+          <option value="call_desc" data-i18n="sort_call_desc">Call ↓</option>
+          <option value="runs_desc" data-i18n="sort_runs_desc">Runs ↓</option>
+          <option value="runs_asc" data-i18n="sort_runs_asc">Runs ↑</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div>
+          <label data-i18n="date_from_label">Date début</label>
+          <input type="date" id="historyDateFrom">
+        </div>
+        <div>
+          <label data-i18n="date_to_label">Date fin</label>
+          <input type="date" id="historyDateTo">
+        </div>
+      </div>
+      <table id="historyTable">
+        <thead>
+          <tr>
+            <th data-i18n="th_call_id">call_id</th>
+            <th data-i18n="th_runs">runs</th>
+            <th data-i18n="th_models">modèles</th>
+            <th data-i18n="th_last_run">dernier run</th>
+            <th data-i18n="th_duration">durée</th>
+            <th data-i18n="th_actions">actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="footer-note">Pipeline <code>{{ pipeline_version }}</code></p>
+    </section>
+    {% endif %}
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const FALLBACK_STRINGS = {
+        fr: {
+          health_label: "Santé",
+          health_na: "Santé n/a",
+          gpu_label: "GPU",
+          gpu_on: "ON",
+          gpu_off: "OFF",
+          gpu_api_ko: "API KO",
+          cancel_run: "Annuler",
+          canceling: "Annulation...",
+          cancel_confirm: "Annuler ce traitement en cours ?",
+          cancel_failed: "Annulation impossible",
+        },
+        en: {
+          health_label: "Health",
+          health_na: "Health n/a",
+          gpu_label: "GPU",
+          gpu_on: "ON",
+          gpu_off: "OFF",
+          gpu_api_ko: "API KO",
+          cancel_run: "Cancel",
+          canceling: "Canceling...",
+          cancel_confirm: "Cancel this running job?",
+          cancel_failed: "Cancel failed",
+        },
+      };
+      let STRINGS = null;
+      const uiLang = document.getElementById("uiLang");
+      const storedLang = localStorage.getItem("call2eds_ui_lang") || "fr";
+      let currentLang = storedLang;
+      if (uiLang) {
+        uiLang.value = storedLang;
+      }
+
+      async function updateGpuStatus() {
+        const pill = document.getElementById("gpu-pill");
+        if (!pill) return;
+        const dict = STRINGS ? (STRINGS[currentLang] || STRINGS.fr) : (FALLBACK_STRINGS[currentLang] || FALLBACK_STRINGS.fr);
+        try {
+          const res = await fetch("/api/system");
+          if (!res.ok) throw new Error("gpu status failed");
+          const data = await res.json();
+          if (data.gpu && data.gpu.available) {
+            pill.textContent = `${dict.gpu_label} ${dict.gpu_on}`;
+            pill.style.borderColor = "rgba(34,197,94,0.35)";
+            pill.style.background = "rgba(34,197,94,0.12)";
+            pill.style.color = "#86efac";
+          } else {
+            pill.textContent = `${dict.gpu_label} ${dict.gpu_off}`;
+            pill.style.borderColor = "rgba(245,158,11,0.35)";
+            pill.style.background = "rgba(245,158,11,0.12)";
+            pill.style.color = "#fcd34d";
+          }
+        } catch (err) {
+          pill.textContent = `${dict.gpu_label} ${dict.gpu_api_ko}`;
+          pill.style.borderColor = "rgba(248,113,113,0.35)";
+          pill.style.background = "rgba(248,113,113,0.12)";
+          pill.style.color = "#fecaca";
+        }
+      }
+
+      const APP_TITLE = "Call2EDS";
+
+      function applyUiLang(lang) {
+        if (!STRINGS) return;
+        const dict = STRINGS[lang] || STRINGS.fr;
+        document.documentElement.lang = lang;
+        document.title = APP_TITLE;
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const key = el.dataset.i18n;
+          const tpl = dict[key];
+          if (!tpl) return;
+          let text = tpl;
+          const count = el.dataset.i18nCount;
+          const call = el.dataset.i18nCall;
+          const def = el.dataset.i18nDefault;
+          if (count) text = text.replace("{count}", count);
+          if (call) text = text.replace("{call}", call);
+          if (def) text = text.replace("{default}", def);
+          el.textContent = text;
+        });
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+          const key = el.dataset.i18nPlaceholder;
+          const tpl = dict[key];
+          if (!tpl) return;
+          el.setAttribute("placeholder", tpl);
+        });
+        updateCallRunsToggleLabel(dict);
+      }
+
+      function applyMinioOverride() {
+        const input = document.getElementById("minioUrlInput");
+        const links = Array.from(document.querySelectorAll("[data-minio-link]"));
+        if (!links.length) return;
+        const stored = localStorage.getItem("call2eds_minio_url") || "";
+        const url = stored.trim();
+        if (input) input.value = url;
+        links.forEach((link) => {
+          const fallback = link.getAttribute("data-minio-default") || link.getAttribute("href");
+          link.setAttribute("href", url || fallback);
+        });
+      }
+
+      function loadStrings() {
+        return fetch("/static/i18n/app.json")
+          .then((r) => {
+            if (!r.ok) throw new Error("i18n load failed");
+            return r.json();
+          })
+          .then((data) => {
+            STRINGS = data.home;
+          });
+      }
+
+      loadStrings()
+        .then(() => {
+          applyUiLang(storedLang);
+          currentLang = storedLang;
+          applyMinioOverride();
+          updateGpuStatus();
+        })
+        .catch(() => {
+          const health = document.getElementById("health-pill");
+          if (health) health.textContent = (FALLBACK_STRINGS[currentLang] || FALLBACK_STRINGS.fr).health_na;
+          applyMinioOverride();
+          updateGpuStatus();
+        });
+      if (uiLang) {
+        uiLang.addEventListener("change", () => {
+          const lang = uiLang.value;
+          localStorage.setItem("call2eds_ui_lang", lang);
+          currentLang = lang;
+          applyUiLang(lang);
+          updateGpuStatus();
+        });
+      }
+
+      const minioApply = document.getElementById("minioUrlApply");
+      if (minioApply) {
+        minioApply.addEventListener("click", () => {
+          const input = document.getElementById("minioUrlInput");
+          if (!input) return;
+          const value = input.value.trim();
+          if (value) {
+            localStorage.setItem("call2eds_minio_url", value);
+          } else {
+            localStorage.removeItem("call2eds_minio_url");
+          }
+          applyMinioOverride();
+        });
+      }
+
+
+      const filter = document.getElementById("historyFilter");
+      const historyModel = document.getElementById("historyModel");
+      const historyMinRuns = document.getElementById("historyMinRuns");
+      const historyDateFrom = document.getElementById("historyDateFrom");
+      const historyDateTo = document.getElementById("historyDateTo");
+      const sort = document.getElementById("historySort");
+      const tableBody = document.querySelector("#historyTable tbody");
+      let historyRows = [];
+
+      const recentRunsData = {{ recent_runs|tojson }};
+
+      function buildGlobalHistory() {
+        if (!tableBody || !Array.isArray(recentRunsData)) return;
+        const byCall = new Map();
+        recentRunsData.forEach((r) => {
+          const callId = r.call_id || "";
+          if (!callId) return;
+          const eventTs = r.user_timestamp || r.created_at || "";
+          const eventDate = eventTs ? new Date(eventTs) : null;
+          const entry = byCall.get(callId) || {
+            call_id: callId,
+            count: 0,
+            models: new Set(),
+            last_event: "",
+            last_event_h: "",
+            last_event_is_manual: false,
+            last_duration_s: null,
+          };
+          entry.count += 1;
+          if (r.model) entry.models.add(r.model);
+          if (eventDate && (!entry.last_event || eventDate > new Date(entry.last_event))) {
+            entry.last_event = eventTs;
+            entry.last_event_h = r.user_timestamp ? r.user_timestamp : (r.created_at_h || "");
+            entry.last_event_is_manual = Boolean(r.user_timestamp);
+            entry.last_duration_s = typeof r.duration_s === "number" ? r.duration_s : null;
+          }
+          byCall.set(callId, entry);
+        });
+
+        function formatDuration(seconds) {
+          const s = typeof seconds === "number" ? seconds : NaN;
+          if (!Number.isFinite(s) || s <= 0) return "n/a";
+          const total = Math.round(s);
+          if (total < 60) return `${total}s`;
+          const mins = Math.floor(total / 60);
+          const secs = total % 60;
+          if (mins < 60) return `${mins}m${secs.toString().padStart(2, "0")}s`;
+          const hours = Math.floor(mins / 60);
+          const rem = mins % 60;
+          return `${hours}h${rem.toString().padStart(2, "0")}m`;
+        }
+
+        tableBody.innerHTML = "";
+        const entries = Array.from(byCall.values()).map((e) => ({
+          call_id: e.call_id,
+          count: e.count,
+          models: Array.from(e.models),
+          last_event: e.last_event || "",
+          last_event_h: e.last_event_h || "",
+          last_event_is_manual: e.last_event_is_manual,
+          last_duration_s: e.last_duration_s,
+        }));
+
+        entries.forEach((e) => {
+          const tr = document.createElement("tr");
+          tr.dataset.call = e.call_id;
+          tr.dataset.count = String(e.count);
+          tr.dataset.event = e.last_event || "";
+          tr.dataset.models = e.models.join(",");
+          tr.dataset.duration = e.last_duration_s != null ? String(e.last_duration_s) : "";
+          const modelsText = e.models.length ? e.models.join(", ") : "n/a";
+          let lastRunText = "n/a";
+          if (e.last_event_h) {
+            lastRunText = e.last_event_is_manual ? e.last_event_h.replace("T", " ") : e.last_event_h;
+          } else if (e.last_event) {
+            lastRunText = new Date(e.last_event).toLocaleString();
+          }
+          const durationText = formatDuration(e.last_duration_s);
+          tr.innerHTML = `
+            <td><a class="row-link" href="/?call_id=${encodeURIComponent(e.call_id)}#callRunsSection">${e.call_id}</a></td>
+            <td>${e.count}</td>
+            <td>${modelsText}</td>
+            <td>${lastRunText}</td>
+            <td>${durationText}</td>
+            <td class="row-actions">
+              <a class="btn" href="/?call_id=${encodeURIComponent(e.call_id)}#callRunsSection" data-i18n="details">détails</a>
+            </td>
+          `;
+          tableBody.appendChild(tr);
+        });
+        historyRows = Array.from(tableBody.querySelectorAll("tr"));
+        fillHistoryModelSelect();
+      }
+
+      function fillHistoryModelSelect() {
+        if (!historyModel || !historyRows.length) return;
+        const models = new Set();
+        historyRows.forEach((row) => {
+          const list = row.dataset.models || "";
+          list.split(",").filter(Boolean).forEach((m) => models.add(m));
+        });
+        const first = historyModel.querySelector("option[value='']");
+        historyModel.innerHTML = "";
+        if (first) historyModel.appendChild(first);
+        Array.from(models).sort().forEach((m) => {
+          const opt = document.createElement("option");
+          opt.value = m;
+          opt.textContent = m;
+          historyModel.appendChild(opt);
+        });
+      }
+
+      const callRunsPanel = document.getElementById("callRunsPanel");
+      const callRunsToggle = document.getElementById("callRunsToggle");
+      const callRunsFilter = document.getElementById("callRunsFilter");
+      const callRunsModel = document.getElementById("callRunsModel");
+      const callRunsStatus = document.getElementById("callRunsStatus");
+      const callRunsSort = document.getElementById("callRunsSort");
+      const callRunsRows = document.querySelectorAll("#callRunsPanel tbody tr");
+      const callRunsBody = document.querySelector("#callRunsPanel tbody");
+
+      function updateCallRunsToggleLabel(dictOverride) {
+        if (!callRunsToggle) return;
+        const dict = dictOverride || (STRINGS ? (STRINGS[currentLang] || STRINGS.fr) : null);
+        const showKey = "toggle_runs_show";
+        const hideKey = "toggle_runs_hide";
+        const showText = dict && dict[showKey] ? dict[showKey] : "Afficher runs";
+        const hideText = dict && dict[hideKey] ? dict[hideKey] : "Masquer runs";
+        const isHidden = callRunsPanel ? callRunsPanel.classList.contains("hidden") : true;
+        callRunsToggle.textContent = isHidden ? showText : hideText;
+      }
+
+      function fillCallRunSelect(selectEl, values) {
+        if (!selectEl) return;
+        const first = selectEl.querySelector("option[value='']");
+        selectEl.innerHTML = "";
+        if (first) selectEl.appendChild(first);
+        values.forEach((val) => {
+          const opt = document.createElement("option");
+          opt.value = val;
+          opt.textContent = val;
+          selectEl.appendChild(opt);
+        });
+      }
+
+      function initCallRunFilters() {
+        if (!callRunsRows || !callRunsRows.length) return;
+        const models = new Set();
+        const statuses = new Set();
+        callRunsRows.forEach((row) => {
+          if (row.dataset.model) models.add(row.dataset.model);
+          if (row.dataset.status) statuses.add(row.dataset.status);
+        });
+        fillCallRunSelect(callRunsModel, Array.from(models).sort());
+        fillCallRunSelect(callRunsStatus, Array.from(statuses).sort());
+      }
+
+      function applyCallRuns() {
+        if (!callRunsRows || !callRunsRows.length) return;
+        const q = (callRunsFilter?.value || "").toLowerCase();
+        const model = callRunsModel?.value || "";
+        const status = callRunsStatus?.value || "";
+        const sortBy = callRunsSort?.value || "created_desc";
+        const items = Array.from(callRunsRows);
+
+        items.forEach((row) => {
+          const blob = `${row.dataset.run} ${row.dataset.model} ${row.dataset.status}`.toLowerCase();
+          const matchText = blob.includes(q);
+          const matchModel = !model || row.dataset.model === model;
+          const matchStatus = !status || row.dataset.status === status;
+          row.style.display = matchText && matchModel && matchStatus ? "" : "none";
+        });
+
+        items.sort((a, b) => {
+          const aCreated = new Date(a.dataset.created || "").getTime();
+          const bCreated = new Date(b.dataset.created || "").getTime();
+          return sortBy === "created_asc" ? aCreated - bCreated : bCreated - aCreated;
+        });
+
+        if (callRunsBody) {
+          items.forEach((row) => callRunsBody.appendChild(row));
+        }
+      }
+
+      function applyHistory() {
+        const q = (filter?.value || "").toLowerCase();
+        const sortBy = sort?.value || "created_desc";
+        const items = Array.from(historyRows);
+        const model = historyModel?.value || "";
+        const minRuns = parseInt(historyMinRuns?.value || "0", 10);
+        const fromRaw = historyDateFrom?.value || "";
+        const toRaw = historyDateTo?.value || "";
+        const from = fromRaw ? new Date(fromRaw + "T00:00:00") : null;
+        const to = toRaw ? new Date(toRaw + "T23:59:59.999") : null;
+
+        items.forEach((row) => {
+          const blob = `${row.dataset.call} ${row.dataset.models || ""}`.toLowerCase();
+          const matchText = blob.includes(q);
+          const matchModel = !model || (row.dataset.models || "").split(",").includes(model);
+          const count = parseInt(row.dataset.count || "0", 10);
+          const matchRuns = !minRuns || count >= minRuns;
+          const eventVal = row.dataset.event || "";
+          const eventDate = eventVal ? new Date(eventVal) : null;
+          const matchFrom = !from || (eventDate && eventDate >= from);
+          const matchTo = !to || (eventDate && eventDate <= to);
+          row.style.display = matchText && matchModel && matchRuns && matchFrom && matchTo ? "" : "none";
+        });
+
+        items.sort((a, b) => {
+          const aCreated = new Date(a.dataset.event || "").getTime();
+          const bCreated = new Date(b.dataset.event || "").getTime();
+          const aCount = parseInt(a.dataset.count || "0", 10);
+          const bCount = parseInt(b.dataset.count || "0", 10);
+          const aCall = (a.dataset.call || "").toLowerCase();
+          const bCall = (b.dataset.call || "").toLowerCase();
+
+          switch (sortBy) {
+            case "created_asc": return aCreated - bCreated;
+            case "call_asc": return aCall.localeCompare(bCall);
+            case "call_desc": return bCall.localeCompare(aCall);
+            case "runs_asc": return aCount - bCount;
+            case "runs_desc": return bCount - aCount;
+            default: return bCreated - aCreated;
+          }
+        });
+
+        if (tableBody) {
+          items.forEach((row) => tableBody.appendChild(row));
+        }
+      }
+
+      buildGlobalHistory();
+      if (filter) filter.addEventListener("input", applyHistory);
+      if (historyModel) historyModel.addEventListener("change", applyHistory);
+      if (historyMinRuns) historyMinRuns.addEventListener("input", applyHistory);
+      if (historyDateFrom) historyDateFrom.addEventListener("change", applyHistory);
+      if (historyDateTo) historyDateTo.addEventListener("change", applyHistory);
+      if (sort) sort.addEventListener("change", applyHistory);
+      if (callRunsToggle && callRunsPanel) {
+        callRunsToggle.addEventListener("click", () => {
+          callRunsPanel.classList.toggle("hidden");
+          updateCallRunsToggleLabel();
+          if (!callRunsPanel.classList.contains("hidden")) {
+            applyCallRuns();
+          }
+        });
+      }
+      if (callRunsFilter) callRunsFilter.addEventListener("input", applyCallRuns);
+      if (callRunsModel) callRunsModel.addEventListener("change", applyCallRuns);
+      if (callRunsStatus) callRunsStatus.addEventListener("change", applyCallRuns);
+      if (callRunsSort) callRunsSort.addEventListener("change", applyCallRuns);
+      initCallRunFilters();
+      updateCallRunsToggleLabel();
+      fetch("/healthz")
+        .then((r) => r.json())
+        .then((data) => {
+          const pill = document.getElementById("health-pill");
+          if (pill) {
+            const dict = STRINGS ? (STRINGS[currentLang] || STRINGS.fr) : { health_label: "health" };
+            const status = (data.status || "ok").toString().toUpperCase();
+            pill.textContent = `${dict.health_label} ${status} v${data.pipeline_version}`;
+          }
+        })
+        .catch(() => {
+          const pill = document.getElementById("health-pill");
+          if (pill) {
+            const dict = STRINGS ? (STRINGS[currentLang] || STRINGS.fr) : { health_na: "health: n/a" };
+            pill.textContent = dict.health_na || "Health n/a";
+          }
+        });
+
+      const activeRuns = document.getElementById("activeRuns");
+      const activeEmpty = document.getElementById("activeRunsEmpty");
+
+      function renderActive(items) {
+        if (!activeRuns) return;
+        activeRuns.innerHTML = "";
+        if (!items || !items.length) {
+          if (activeEmpty) activeEmpty.style.display = "";
+          return;
+        }
+        if (activeEmpty) activeEmpty.style.display = "none";
+        items.forEach((run) => {
+          const pct = typeof run.progress === "number" ? Math.max(0, Math.min(1, run.progress)) : 0;
+          const stage = run.stage || run.status || "running";
+          const canCancel = !["completed", "failed", "canceled"].includes(run.status || "");
+          const dict = STRINGS ? (STRINGS[currentLang] || STRINGS.fr) : (FALLBACK_STRINGS[currentLang] || FALLBACK_STRINGS.fr);
+          const div = document.createElement("div");
+          div.className = "progress-item";
+          div.innerHTML = `
+            <div class="progress-head">
+              <span>${run.call_id} · ${run.run_id}</span>
+              <span>${stage} · ${(pct * 100).toFixed(0)}%</span>
+            </div>
+            <div class="progress-bar"><span style="width:${(pct * 100).toFixed(0)}%"></span></div>
+            <div class="search-inline" style="margin-top:8px;">
+              ${canCancel ? `<button class="btn" data-cancel="${run.run_id}">${dict.cancel_run}</button>` : ""}
+            </div>
+          `;
+          activeRuns.appendChild(div);
+        });
+      }
+
+      if (activeRuns) {
+        activeRuns.addEventListener("click", (ev) => {
+          const btn = ev.target.closest("button[data-cancel]");
+          if (!btn) return;
+          const dict = STRINGS ? (STRINGS[currentLang] || STRINGS.fr) : (FALLBACK_STRINGS[currentLang] || FALLBACK_STRINGS.fr);
+          if (!confirm(dict.cancel_confirm)) return;
+          const runId = btn.getAttribute("data-cancel");
+          btn.classList.add("disabled");
+          btn.textContent = dict.canceling;
+          fetch(`/api/runs/${runId}/cancel`, { method: "POST" })
+            .then((r) => {
+              if (!r.ok) throw new Error("cancel failed");
+              pollActiveRuns();
+            })
+            .catch(() => {
+              btn.classList.remove("disabled");
+              btn.textContent = dict.cancel_failed;
+              setTimeout(() => {
+                btn.textContent = dict.cancel_run;
+              }, 1500);
+            });
+        });
+      }
+
+      let activeRunsInterval = null;
+
+      function pollActiveRuns() {
+        fetch("/api/runs/active")
+          .then((r) => {
+            if (r.status === 401) {
+              if (activeRunsInterval) clearInterval(activeRunsInterval);
+              window.location.href = "/login";
+              return null;
+            }
+            if (!r.ok) throw new Error("active runs failed");
+            return r.json();
+          })
+          .then((data) => {
+            if (!data) return;
+            renderActive(data.items || []);
+          })
+          .catch(() => renderActive([]));
+      }
+
+      pollActiveRuns();
+      activeRunsInterval = setInterval(pollActiveRuns, 5000);
+    });
+  </script>
+</body>
+</html>

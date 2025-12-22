@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call2EDS</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #0e1626;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --line: #1f2937;
+      --accent: #22c55e;
+      --accent-2: #06b6d4;
+      --error: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 600px at 15% -10%, #1e293b 0%, transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, #164e63 0%, transparent 60%),
+        var(--bg);
+    }
+    .page { max-width: 980px; margin: 0 auto; padding: 36px 24px 60px; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; }
+    .title { font-family:"Space Grotesk", sans-serif; font-size:26px; margin:0 0 6px; }
+    .subtitle { color: var(--muted); margin:0; font-size:13px; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; }
+    .card {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(11, 18, 32, 0.95));
+      border:1px solid var(--line); border-radius:16px; padding:22px;
+      box-shadow: 0 18px 40px rgba(2,6,23,0.45);
+      max-width: 520px;
+    }
+    label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+    input {
+      width: 100%;
+      background: #0b1220;
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .btn {
+      text-decoration:none; color:var(--text);
+      padding:10px 14px; border-radius:10px;
+      border:1px solid var(--line); font-size:13px;
+      background: transparent; transition:0.2s ease;
+    }
+    .btn:hover { border-color: var(--accent-2); color:#e2f9ff; }
+    .btn.primary { background: linear-gradient(135deg, #16a34a, #22c55e); color:#04140a; border:none; font-weight:600; }
+    .note { color: var(--muted); font-size: 12px; margin-top: 8px; }
+    .error { color: var(--error); font-size: 12px; margin-top: 10px; }
+    .alert {
+      border: 1px solid rgba(6,182,212,0.35);
+      background: rgba(6,182,212,0.12);
+      color: #a5f3fc;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div>
+        <h1 class="title" data-i18n="setup_title">Initialiser l'accès - Call2EDS</h1>
+        <p class="subtitle" data-i18n="setup_subtitle">Créez le premier compte administrateur.</p>
+      </div>
+      <div class="actions">
+        <select id="uiLang">
+          <option value="fr">FR</option>
+          <option value="en">EN</option>
+        </select>
+        <a class="btn" href="/" data-i18n="back">Retour</a>
+      </div>
+    </header>
+
+    <section class="card">
+      {% if auth_enabled %}
+      <div class="alert" data-i18n="setup_notice">
+        Sécurité active : créez le premier administrateur pour déverrouiller l'accès.
+      </div>
+      {% endif %}
+      <form id="setup-form">
+        <label data-i18n="setup_username">Utilisateur admin</label>
+        <input type="text" id="setup-username" autocomplete="username" required>
+        <label data-i18n="setup_password">Mot de passe</label>
+        <input type="password" id="setup-password" autocomplete="new-password" required>
+        <label data-i18n="setup_password_confirm">Confirmer le mot de passe</label>
+        <input type="password" id="setup-password-confirm" autocomplete="new-password" required>
+        <button class="btn primary" type="submit" data-i18n="setup_button">Créer le compte</button>
+        <div class="error" id="setup-error"></div>
+        <p class="note" data-i18n="setup_help">L'accès sécurisé sera actif dès que l'authentification est activée côté serveur.</p>
+      </form>
+    </section>
+  </div>
+
+  <script>
+    const FALLBACK = {
+      fr: {
+        setup_title: "Initialiser l'accès - Call2EDS",
+        setup_subtitle: "Créez le premier compte administrateur.",
+        setup_notice: "Sécurité active : créez le premier administrateur pour déverrouiller l'accès.",
+        setup_username: "Utilisateur admin",
+        setup_password: "Mot de passe",
+        setup_password_confirm: "Confirmer le mot de passe",
+        setup_button: "Créer le compte",
+        setup_help: "L'accès sécurisé sera actif dès que l'authentification est activée côté serveur.",
+        back: "Retour",
+        setup_error: "Erreur: {err}",
+        setup_mismatch: "Les mots de passe ne correspondent pas."
+      },
+      en: {
+        setup_title: "Bootstrap access - Call2EDS",
+        setup_subtitle: "Create the first admin account.",
+        setup_notice: "Security is enabled: create the first admin to unlock access.",
+        setup_username: "Admin username",
+        setup_password: "Password",
+        setup_password_confirm: "Confirm password",
+        setup_button: "Create account",
+        setup_help: "Secure access will be active once auth is enabled server-side.",
+        back: "Back",
+        setup_error: "Error: {err}",
+        setup_mismatch: "Passwords do not match."
+      }
+    };
+    let STRINGS = null;
+    const uiLang = document.getElementById("uiLang");
+    const storedLang = localStorage.getItem("call2eds_ui_lang") || "fr";
+    let currentLang = storedLang;
+
+    function format(str, vars) {
+      return String(str).replace(/\{(\w+)\}/g, (_, key) => (vars[key] ?? `{${key}}`));
+    }
+
+    function dict() {
+      return STRINGS ? (STRINGS[currentLang] || STRINGS.fr) : (FALLBACK[currentLang] || FALLBACK.fr);
+    }
+
+    const APP_TITLE = "Call2EDS";
+
+    function applyLanguage(lang) {
+      const d = dict();
+      document.documentElement.lang = lang;
+      document.title = APP_TITLE;
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        if (!key || !d[key]) return;
+        el.textContent = d[key];
+      });
+    }
+
+    async function loadStrings() {
+      try {
+        const res = await fetch("/static/i18n/app.json");
+        if (!res.ok) throw new Error("i18n");
+        const data = await res.json();
+        STRINGS = data.setup || null;
+      } catch (err) {
+        STRINGS = null;
+      }
+      applyLanguage(currentLang);
+    }
+
+    const form = document.getElementById("setup-form");
+    const errorBox = document.getElementById("setup-error");
+
+    if (uiLang) {
+      uiLang.value = storedLang;
+      uiLang.addEventListener("change", (e) => {
+        currentLang = e.target.value;
+        localStorage.setItem("call2eds_ui_lang", currentLang);
+        applyLanguage(currentLang);
+      });
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorBox.textContent = "";
+      const d = dict();
+      const username = document.getElementById("setup-username").value.trim();
+      const password = document.getElementById("setup-password").value.trim();
+      const confirm = document.getElementById("setup-password-confirm").value.trim();
+      if (password !== confirm) {
+        errorBox.textContent = d.setup_mismatch || FALLBACK.fr.setup_mismatch;
+        return;
+      }
+      try {
+        const res = await fetch("/api/auth/setup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ username, password })
+        });
+        if (!res.ok) {
+          errorBox.textContent = format(d.setup_error || FALLBACK.fr.setup_error, { err: res.status });
+          return;
+        }
+        window.location.href = "/login";
+      } catch (err) {
+        errorBox.textContent = format(d.setup_error || FALLBACK.fr.setup_error, { err: err.message });
+      }
+    });
+
+    loadStrings();
+  </script>
+</body>
+</html>

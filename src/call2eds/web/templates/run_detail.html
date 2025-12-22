@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call2EDS</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #0e1626;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --line: #1f2937;
+      --accent: #22c55e;
+      --accent-2: #06b6d4;
+      --warn: #f59e0b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 600px at 15% -10%, #1e293b 0%, transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, #164e63 0%, transparent 60%),
+        var(--bg);
+    }
+    .page { max-width: 1600px; width: 100%; margin: 0 auto; padding: 28px 24px 60px; }
+    .topbar { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:20px; flex-wrap: wrap; }
+    .title { font-family:"Space Grotesk", sans-serif; font-size:24px; margin:0 0 6px; }
+    .subtitle { color: var(--muted); margin:0; font-size:13px; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; margin-left:auto; flex:1 1 320px; }
+    .actions > * { white-space: nowrap; }
+    .actions select {
+      background:#0b1220; border:1px solid var(--line);
+      color:var(--text); padding:8px 10px; border-radius:10px; font-size:12px;
+    }
+    .btn {
+      text-decoration:none; color:var(--text);
+      padding:8px 12px; border-radius:10px;
+      border:1px solid var(--line); font-size:12px;
+      background: transparent; transition:0.2s ease;
+    }
+    .btn:hover { border-color: var(--accent-2); color:#e2f9ff; }
+    .btn.primary { background: linear-gradient(135deg, #16a34a, #22c55e); color:#04140a; border:none; font-weight:600; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin: 16px 0 24px; }
+    .card {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(11, 18, 32, 0.95));
+      border:1px solid var(--line); border-radius:16px; padding:16px;
+      box-shadow: 0 18px 40px rgba(2,6,23,0.45);
+    }
+    .card h2 { font-family:"Space Grotesk", sans-serif; font-size:16px; margin:0 0 10px; }
+    .stat { font-size:26px; font-family:"Space Grotesk", sans-serif; margin:0; }
+    .stat-label { color: var(--muted); font-size:12px; }
+    .pill {
+      display:inline-flex; align-items:center; gap:6px;
+      background: rgba(34,197,94,0.12); color:#86efac;
+      padding:4px 10px; border-radius:999px; font-size:12px;
+      border:1px solid rgba(34,197,94,0.35);
+    }
+    .table { width:100%; border-collapse: collapse; font-size:12px; }
+    .table th, .table td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); }
+    .table th { color:var(--muted); font-size:11px; font-weight:600; }
+    .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+    .toolbar input, .toolbar select {
+      background:#0b1220; border:1px solid var(--line);
+      color:var(--text); padding:8px 10px; border-radius:10px; font-size:12px;
+    }
+    .timeline { display:flex; flex-direction:column; gap:14px; }
+    .turn {
+      background: #0b1324;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 14px;
+      position:relative;
+    }
+    .turn-header { display:flex; gap:8px; flex-wrap:wrap; align-items:center; font-size:12px; color:var(--muted); }
+    .speaker {
+      font-weight:600; font-size:12px; padding:4px 8px; border-radius:10px;
+      background: rgba(6,182,212,0.15); color:#a5f3fc; border:1px solid rgba(6,182,212,0.3);
+    }
+    .spk-0 { border-left:4px solid #38bdf8; }
+    .spk-1 { border-left:4px solid #f97316; }
+    .spk-2 { border-left:4px solid #22c55e; }
+    .spk-3 { border-left:4px solid #eab308; }
+    .spk-4 { border-left:4px solid #f43f5e; }
+    .spk-5 { border-left:4px solid #a855f7; }
+    .turn-text { margin:8px 0 6px; font-size:15px; }
+    .meta-line { color:var(--muted); font-size:12px; }
+    details { margin-top:6px; }
+    summary { cursor:pointer; font-size:12px; color:#cbd5f5; }
+    audio { width:100%; margin-top:6px; }
+    .badge {
+      background: rgba(245,158,11,0.15); color:#fcd34d;
+      padding:2px 8px; border-radius:999px; font-size:11px; border:1px solid rgba(245,158,11,0.3);
+    }
+    .footer-note { color:var(--muted); font-size:12px; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div>
+        <h1 class="title" data-i18n="run_title" data-i18n-run="{{ run_id }}">Run {{ run_id }}</h1>
+        <p class="subtitle" data-i18n="run_subtitle" data-i18n-call="{{ call_id }}" data-i18n-version="{{ pipeline_version }}">Call {{ call_id }} · pipeline v{{ pipeline_version }}</p>
+      </div>
+      <div class="actions">
+        <select id="uiLang">
+          <option value="fr">FR</option>
+          <option value="en">EN</option>
+        </select>
+        <a class="btn" href="/?call_id={{ call_id }}" data-i18n="back">Retour</a>
+        <a class="btn" href="{{ minio_console_url }}" target="_blank" rel="noopener" data-i18n="minio_console">MinIO Console</a>
+        <a class="btn" href="/access" data-i18n="access">Accès</a>
+        {% if user %}
+          <a class="btn" href="/logout" data-i18n="logout">Se déconnecter</a>
+        {% endif %}
+        <a class="btn" href="/export-zip/{{ call_id }}/{{ run_id }}" data-i18n="export_zip">Export ZIP</a>
+        <a class="btn primary" href="#timeline" data-i18n="timeline">Timeline</a>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <h2 data-i18n="estimated_duration">Durée estimée</h2>
+        <p class="stat">{{ "%.1f"|format(summary.duration_s) }}s</p>
+        <p class="stat-label" data-i18n="based_on_last_segment">basé sur le dernier segment</p>
+      </div>
+      <div class="card">
+        <h2 data-i18n="turns">Turns</h2>
+        <p class="stat">{{ summary.turns }}</p>
+        <p class="stat-label" data-i18n="dialogue_segments">segments de dialogue</p>
+      </div>
+      <div class="card">
+        <h2 data-i18n="speakers">Speakers</h2>
+        <p class="stat">{{ summary.speakers|length }}</p>
+        <p class="stat-label">
+          {% for s in summary.speakers %}
+            <span class="pill">spk {{ s }}</span>
+          {% endfor %}
+        </p>
+      </div>
+      <div class="card">
+        <h2 data-i18n="artifacts">Artefacts</h2>
+        <p class="stat">{{ artifacts|length }}</p>
+        <p class="stat-label" data-i18n="minio_files">fichiers MinIO</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="speakers_volume">Speakers volume</h2>
+      <table class="table">
+        <thead><tr><th data-i18n="speaker">speaker</th><th data-i18n="turns_lower">turns</th><th data-i18n="duration_s">durée (s)</th></tr></thead>
+        <tbody>
+        {% for spk, st in summary.speaker_stats.items() %}
+          <tr>
+            <td><span class="speaker">spk {{ spk }}</span></td>
+            <td>{{ st.turns }}</td>
+            <td>{{ "%.1f"|format(st.duration_s) }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="artifacts">Artefacts</h2>
+      <table class="table">
+        <thead><tr><th data-i18n="key">Key</th><th data-i18n="size">Taille</th><th data-i18n="sha256">SHA256</th><th data-i18n="download_short">DL</th></tr></thead>
+        <tbody>
+        {% for a in artifacts %}
+          <tr>
+            <td><code>{{ a.key }}</code></td>
+            <td>{{ (a.size or 0)|int }} B</td>
+            <td><small>{{ a.sha256 }}</small></td>
+            <td><a class="btn" href="{{ a.url }}" data-i18n="download">Télécharger</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    {% if timeline %}
+    <section class="card" id="timeline">
+      <h2 data-i18n="dialogue_prosody">Dialogue + prosodie</h2>
+      <div class="toolbar">
+        <input id="timelineSearch" type="text" placeholder="Rechercher dans le texte..." data-i18n-placeholder="search_text">
+        <select id="speakerFilter">
+          <option value="" data-i18n="all_speakers">Tous les speakers</option>
+          {% for s in summary.speakers %}
+            <option value="{{ s }}">spk {{ s }}</option>
+          {% endfor %}
+        </select>
+        <input id="minDuration" type="number" min="0" step="0.1" value="0.2" placeholder="Durée min (s)" data-i18n-placeholder="min_duration_s">
+        <input id="minConf" type="number" min="0" max="1" step="0.01" placeholder="Conf min" data-i18n-placeholder="min_conf">
+        <select id="sortBy">
+          <option value="start_asc" data-i18n="sort_start_asc">Start ↑</option>
+          <option value="start_desc" data-i18n="sort_start_desc">Start ↓</option>
+          <option value="duration_desc" data-i18n="sort_duration_desc">Durée ↓</option>
+          <option value="duration_asc" data-i18n="sort_duration_asc">Durée ↑</option>
+          <option value="conf_desc" data-i18n="sort_conf_desc">Conf ↓</option>
+          <option value="conf_asc" data-i18n="sort_conf_asc">Conf ↑</option>
+          <option value="speaker_asc" data-i18n="sort_speaker_asc">Speaker ↑</option>
+          <option value="speaker_desc" data-i18n="sort_speaker_desc">Speaker ↓</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);">
+          <input id="mergeToggle" type="checkbox" checked>
+          <span data-i18n="merge_visual">Fusion visuelle (affichage)</span>
+        </label>
+        <input id="mergeGap" type="number" min="0" step="0.1" value="2.5" placeholder="gap max (s)" data-i18n-placeholder="gap_max_s">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);">
+          <input id="mergeIgnoreOverlap" type="checkbox" checked>
+          <span data-i18n="ignore_overlap">Ignorer overlap (-1)</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);">
+          <input id="mergeAggressive" type="checkbox">
+          <span data-i18n="merge_aggressive">Fusion agressive</span>
+        </label>
+        <input id="mergeBridge" type="number" min="0" step="0.1" value="0.4" placeholder="micro‑interruptions (s)" data-i18n-placeholder="micro_interruptions_s">
+        <span class="badge" data-i18n-count="{{ timeline|length }}" data-i18n="items_label">{{ timeline|length }} items</span>
+      </div>
+      <div class="timeline" id="timelineList" data-call-id="{{ call_id }}" data-run-id="{{ run_id }}">
+        {% set colors = ['is-primary','is-link','is-info','is-warning','is-success','is-danger'] %}
+        {% for t in timeline %}
+          {% set dur = (t.t_end - t.t_start) %}
+          <div
+            class="turn spk-{{ t.speaker_id % 6 }}"
+            data-speaker="{{ t.speaker_id }}"
+            data-text="{{ t.text | lower }}"
+            data-start="{{ "%.3f"|format(t.t_start) }}"
+            data-end="{{ "%.3f"|format(t.t_end) }}"
+            data-duration="{{ "%.3f"|format(dur) }}"
+            data-conf="{{ "%.3f"|format(t.asr_conf_turn) }}"
+            data-arousal="{{ t.arousal.label }}"
+            data-f0="{{ "%.1f"|format(t.f0_mean) }}"
+            data-energy="{{ "%.1f"|format(t.energy_mean) }}"
+            data-voiced="{{ "%.0f"|format(t.voiced_ratio*100) }}"
+            data-rate="{{ "%.2f"|format(t.speech_rate_wps) }}"
+            data-text-raw="{{ t.text }}"
+          >
+            <div class="turn-header">
+              <span class="speaker">spk {{ t.speaker_id }}</span>
+              <span>{{ "%.2f"|format(t.t_start) }}s → {{ "%.2f"|format(t.t_end) }}s</span>
+              <span><span data-i18n="conf_label">conf</span> {{ "%.2f"|format(t.asr_conf_turn) }}</span>
+              <span>{{ t.arousal.label }}</span>
+              {% if t.overlap_ratio and t.overlap_ratio >= 0.25 %}
+                <span class="badge"><span data-i18n="overlap_label">overlap</span> {{ "%.0f"|format(t.overlap_ratio*100) }}%</span>
+              {% endif %}
+            </div>
+            <div class="turn-text">{{ t.text }}</div>
+            <div class="meta-line" data-meta>
+              f0 {{ "%.1f"|format(t.f0_mean) }} Hz · énergie {{ "%.1f"|format(t.energy_mean) }} dB · voisé {{ "%.0f"|format(t.voiced_ratio*100) }}% · débit {{ "%.2f"|format(t.speech_rate_wps) }} w/s
+            </div>
+            <details>
+              <summary><span class="summary-text" data-i18n="listen_snippet">🎧 Écouter l’extrait</span> <span class="snippet-duration" data-approx="{{ "%.2f"|format(t.clip_duration_s) }}">(≈ {{ "%.2f"|format(t.clip_duration_s) }}s)</span></summary>
+              <audio controls preload="metadata" data-clip="1" src="{{ t.audio_url }}"></audio>
+            </details>
+          </div>
+        {% endfor %}
+      </div>
+      <p class="footer-note" data-i18n="tip_filter">Astuce: filtre par speaker + recherche texte pour isoler une erreur de diarisation.</p>
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <h2 data-i18n="raw_manifest">Manifest brut</h2>
+      <details>
+        <summary data-i18n="show_manifest">Afficher le manifest JSON</summary>
+        <pre style="max-height:320px;overflow:auto;">{{ manifest | tojson(indent=2) }}</pre>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const FALLBACK_STRINGS = {
+        fr: {
+          conf_label: "conf",
+          overlap_label: "chevauchement",
+          meta_line: "f0 {f0} Hz · énergie {energy} dB · voisé {voiced}% · débit {rate} w/s",
+          page_title: "Run {run} · Call2EDS",
+        },
+        en: {
+          conf_label: "conf",
+          overlap_label: "overlap",
+          meta_line: "f0 {f0} Hz · energy {energy} dB · voiced {voiced}% · rate {rate} w/s",
+          page_title: "Run {run} · Call2EDS",
+        },
+      };
+      let STRINGS = null;
+      const langSelect = document.getElementById("uiLang");
+      const defaultLang = localStorage.getItem("call2eds_ui_lang") || "fr";
+      if (langSelect) {
+        langSelect.value = defaultLang;
+      }
+
+      function format(str, vars) {
+        return str.replace(/\{(\w+)\}/g, (_, key) => (vars[key] ?? `{${key}}`));
+      }
+
+      const APP_TITLE = "Call2EDS";
+
+      function applyLanguage(lang) {
+        const dict = STRINGS ? (STRINGS[lang] || STRINGS.fr) : (FALLBACK_STRINGS[lang] || FALLBACK_STRINGS.fr);
+        document.documentElement.lang = lang;
+        const runId = document.querySelector("[data-i18n-run]")?.getAttribute("data-i18n-run") || "";
+        const callId = document.querySelector("[data-i18n-call]")?.getAttribute("data-i18n-call") || "";
+        const version = document.querySelector("[data-i18n-version]")?.getAttribute("data-i18n-version") || "";
+
+        if (!STRINGS) {
+          document.title = APP_TITLE;
+          document.querySelectorAll(".turn").forEach((turn) => {
+            const meta = turn.querySelector(".meta-line[data-meta]");
+            if (!meta) return;
+            const f0 = turn.dataset.f0 || "";
+            const energy = turn.dataset.energy || "";
+            const voiced = turn.dataset.voiced || "";
+            const rate = turn.dataset.rate || "";
+            meta.textContent = format(dict.meta_line, { f0, energy, voiced, rate });
+          });
+          return;
+        }
+
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const key = el.getAttribute("data-i18n");
+          if (!key || !dict[key]) return;
+          el.textContent = format(dict[key], { run: runId, call: callId, version });
+        });
+        document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+          const key = el.getAttribute("data-i18n-placeholder");
+          if (!key || !dict[key]) return;
+          el.setAttribute("placeholder", dict[key]);
+        });
+        document.querySelectorAll("[data-i18n-count]").forEach((el) => {
+          const count = el.getAttribute("data-i18n-count") || "0";
+          const key = el.getAttribute("data-i18n");
+          if (!key || !dict[key]) return;
+          el.textContent = `${count} ${dict[key]}`;
+        });
+        document.querySelectorAll(".turn").forEach((turn) => {
+          const meta = turn.querySelector(".meta-line[data-meta]");
+          if (!meta) return;
+          const f0 = turn.dataset.f0 || "";
+          const energy = turn.dataset.energy || "";
+          const voiced = turn.dataset.voiced || "";
+          const rate = turn.dataset.rate || "";
+          meta.textContent = format(dict.meta_line, { f0, energy, voiced, rate });
+        });
+        document.querySelectorAll(".summary-text[data-i18n]").forEach((el) => {
+          const key = el.getAttribute("data-i18n");
+          if (!key || !dict[key]) return;
+          el.textContent = dict[key];
+        });
+        document.title = APP_TITLE;
+        const mergeOn = document.getElementById("mergeToggle")?.checked;
+        if (mergeOn) {
+          renderMerged();
+        }
+      }
+
+      function loadStrings() {
+        return fetch("/static/i18n/app.json")
+          .then((r) => {
+            if (!r.ok) throw new Error("i18n load failed");
+            return r.json();
+          })
+          .then((data) => {
+            STRINGS = data.run_detail;
+          });
+      }
+
+      loadStrings()
+        .then(() => {
+          if (langSelect) {
+            langSelect.addEventListener("change", (e) => {
+              const value = e.target.value || "fr";
+              localStorage.setItem("call2eds_ui_lang", value);
+              applyLanguage(value);
+            });
+          }
+          applyLanguage(defaultLang);
+        })
+        .catch(() => {
+          document.documentElement.lang = defaultLang;
+          applyLanguage(defaultLang);
+        });
+
+      const search = document.getElementById("timelineSearch");
+      const filter = document.getElementById("speakerFilter");
+      const turns = document.querySelectorAll(".turn");
+
+      const mergeToggle = document.getElementById("mergeToggle");
+      const mergeGapInput = document.getElementById("mergeGap");
+      const mergeIgnoreOverlap = document.getElementById("mergeIgnoreOverlap");
+      const mergeAggressive = document.getElementById("mergeAggressive");
+      const mergeBridge = document.getElementById("mergeBridge");
+
+      function parseNum(val) {
+        if (val === null || val === undefined) return NaN;
+        return parseFloat(String(val).replace(",", "."));
+      }
+
+      function getFilterState() {
+        const q = (search?.value || "").toLowerCase();
+        const spk = filter?.value || "";
+        const minDur = parseNum(document.getElementById("minDuration")?.value || "0");
+        const minConf = parseNum(document.getElementById("minConf")?.value || "0");
+        const sortBy = document.getElementById("sortBy")?.value || "start_asc";
+        return { q, spk, minDur, minConf, sortBy };
+      }
+
+      function sortItems(items, sortBy) {
+        return items.sort((a, b) => {
+          const aStart = parseFloat(a.dataset.start || "0");
+          const bStart = parseFloat(b.dataset.start || "0");
+          const aDur = parseFloat(a.dataset.duration || "0");
+          const bDur = parseFloat(b.dataset.duration || "0");
+          const aConf = parseFloat(a.dataset.conf || "0");
+          const bConf = parseFloat(b.dataset.conf || "0");
+          const aSpk = parseInt(a.dataset.speaker || "0", 10);
+          const bSpk = parseInt(b.dataset.speaker || "0", 10);
+
+          switch (sortBy) {
+            case "start_desc": return bStart - aStart;
+            case "duration_desc": return bDur - aDur;
+            case "duration_asc": return aDur - bDur;
+            case "conf_desc": return bConf - aConf;
+            case "conf_asc": return aConf - bConf;
+            case "speaker_desc": return bSpk - aSpk;
+            case "speaker_asc": return aSpk - bSpk;
+            default: return aStart - bStart;
+          }
+        });
+      }
+
+      function applyFilters() {
+        const { q, spk, minDur, minConf, sortBy } = getFilterState();
+        const list = document.getElementById("timelineList");
+
+        if (!mergeToggle || !mergeToggle.checked) {
+          const items = sortItems(Array.from(turns), sortBy);
+          if (list) {
+            list.querySelectorAll(".turn-merged").forEach((t) => t.remove());
+            items.forEach((item) => list.appendChild(item));
+          }
+          items.forEach((t) => {
+            const matchText = !q || t.dataset.text.includes(q);
+            const matchSpk = !spk || t.dataset.speaker === spk;
+            const dur = parseFloat(t.dataset.duration || "0");
+            const conf = parseFloat(t.dataset.conf || "0");
+            const matchDur = Number.isNaN(minDur) ? true : dur >= minDur;
+            const matchConf = Number.isNaN(minConf) ? true : conf >= minConf;
+            t.style.display = (matchText && matchSpk && matchDur && matchConf) ? "" : "none";
+          });
+          return;
+        }
+
+        renderMerged();
+      }
+      if (search) search.addEventListener("input", applyFilters);
+      if (filter) filter.addEventListener("change", applyFilters);
+      const minDuration = document.getElementById("minDuration");
+      if (minDuration) minDuration.addEventListener("input", applyFilters);
+      const minConf = document.getElementById("minConf");
+      if (minConf) minConf.addEventListener("input", applyFilters);
+      const sortBy = document.getElementById("sortBy");
+      if (sortBy) sortBy.addEventListener("change", applyFilters);
+      if (mergeToggle) mergeToggle.addEventListener("change", applyFilters);
+      if (mergeGapInput) mergeGapInput.addEventListener("input", applyFilters);
+      if (mergeIgnoreOverlap) mergeIgnoreOverlap.addEventListener("change", applyFilters);
+      if (mergeAggressive) mergeAggressive.addEventListener("change", applyFilters);
+      if (mergeBridge) mergeBridge.addEventListener("input", applyFilters);
+
+      function renderMerged() {
+        const lang = localStorage.getItem("call2eds_ui_lang") || "fr";
+        const dict = STRINGS ? (STRINGS[lang] || STRINGS.fr) : (FALLBACK_STRINGS[lang] || FALLBACK_STRINGS.fr);
+        const { q, spk, minDur, minConf, sortBy } = getFilterState();
+        const list = document.getElementById("timelineList");
+        if (!list) return;
+        const callId = list.dataset.callId || "";
+        const runId = list.dataset.runId || "";
+        const gap = parseNum(mergeGapInput?.value || "2.5");
+        const bridgeMax = parseNum(mergeBridge?.value || "0.4");
+        const ignoreOverlap = !!mergeIgnoreOverlap?.checked;
+        const aggressive = !!mergeAggressive?.checked;
+        const raw = Array.from(turns).map((t) => ({
+          speaker: t.dataset.speaker || "",
+          start: parseFloat(t.dataset.start || "0"),
+          end: parseFloat(t.dataset.end || "0"),
+          duration: parseFloat(t.dataset.duration || "0"),
+          conf: parseFloat(t.dataset.conf || "0"),
+          text: t.dataset.textRaw || "",
+          arousal: t.dataset.arousal || "",
+          f0: t.dataset.f0 || "",
+          energy: t.dataset.energy || "",
+          voiced: t.dataset.voiced || "",
+          rate: t.dataset.rate || "",
+        })).sort((a, b) => a.start - b.start);
+
+        const merged = [];
+        let i = 0;
+        while (i < raw.length) {
+          const item = raw[i];
+          const last = merged[merged.length - 1];
+          const isUnknown = item.speaker === "-1" || item.speaker === -1;
+
+          if (ignoreOverlap && isUnknown && last) {
+            if (item.start <= last.end + gap) {
+              last.end = Math.max(last.end, item.end);
+              last.duration = last.end - last.start;
+            }
+            i += 1;
+            continue;
+          }
+
+          if (last && last.speaker === item.speaker && (item.start - last.end) <= gap) {
+            last.end = Math.max(last.end, item.end);
+            last.duration = last.end - last.start;
+            last.text = `${last.text} ${item.text}`.trim();
+            last.count += 1;
+            last.conf = (last.conf * (last.count - 1) + item.conf) / last.count;
+            i += 1;
+            continue;
+          }
+
+          if (aggressive && last && item.speaker !== last.speaker && item.duration <= bridgeMax) {
+            const next = raw[i + 1];
+            if (next && next.speaker === last.speaker && (next.start - item.end) <= gap) {
+              last.end = Math.max(last.end, next.end);
+              last.duration = last.end - last.start;
+              last.text = `${last.text} ${next.text}`.trim();
+              last.count += 1;
+              last.conf = (last.conf * (last.count - 1) + next.conf) / last.count;
+              i += 2;
+              continue;
+            }
+          }
+
+          merged.push({
+            ...item,
+            count: 1,
+          });
+          i += 1;
+        }
+
+        const filtered = merged.filter((t) => {
+          const matchText = !q || t.text.toLowerCase().includes(q);
+          const matchSpk = !spk || t.speaker === spk;
+          const matchDur = Number.isNaN(minDur) ? true : t.duration >= minDur;
+          const matchConf = Number.isNaN(minConf) ? true : t.conf >= minConf;
+          return matchText && matchSpk && matchDur && matchConf;
+        });
+
+        const sorted = sortItems(
+          filtered.map((t) => {
+            const el = document.createElement("div");
+            el.dataset.start = t.start.toString();
+            el.dataset.duration = t.duration.toString();
+            el.dataset.conf = t.conf.toString();
+            el.dataset.speaker = t.speaker;
+            return Object.assign(el, { _data: t });
+          }),
+          sortBy
+        ).map((el) => el._data);
+
+        list.querySelectorAll(".turn").forEach((t) => (t.style.display = "none"));
+        list.querySelectorAll(".turn-merged").forEach((t) => t.remove());
+
+        sorted.forEach((t) => {
+          const fusionLabel = t.count > 1 ? `<span>${format(dict.fusion_turns, { n: t.count })}</span>` : "";
+          const confLabel = dict.conf_label || "conf";
+          const div = document.createElement("div");
+          div.className = `turn turn-merged spk-${parseInt(t.speaker || "0", 10) % 6}`;
+          div.innerHTML = `
+            <div class="turn-header">
+              <span class="speaker">spk ${t.speaker}</span>
+              <span>${t.start.toFixed(2)}s → ${t.end.toFixed(2)}s</span>
+              <span>${confLabel} ${t.conf.toFixed(2)}</span>
+              ${fusionLabel}
+            </div>
+            <div class="turn-text">${t.text}</div>
+            <div class="meta-line">${dict.merged_view}</div>
+            <details>
+              <summary>${dict.listen_snippet}</summary>
+              <audio controls preload="metadata" src="/audio/${callId}/${runId}?t0=${t.start.toFixed(2)}&t1=${t.end.toFixed(2)}"></audio>
+            </details>
+          `;
+          list.appendChild(div);
+        });
+      }
+
+      applyFilters();
+
+      const audios = document.querySelectorAll("audio[data-clip]");
+      audios.forEach((audio) => {
+        const summary = audio.closest("details")?.querySelector(".snippet-duration");
+        const approx = summary?.getAttribute("data-approx");
+        if (summary && approx) summary.textContent = `(≈ ${approx}s)`;
+        audio.addEventListener("loadedmetadata", () => {
+          if (!summary) return;
+          const d = audio.duration;
+          if (Number.isFinite(d) && d > 0) {
+            summary.textContent = `(durée ${d.toFixed(2)}s)`;
+          }
+        });
+        try { audio.load(); } catch (e) {}
+      });
+    });
+  </script>
+</body>
+</html>

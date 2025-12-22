@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call2EDS</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #0e1626;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --line: #1f2937;
+      --accent: #22c55e;
+      --accent-2: #06b6d4;
+      --warn: #f59e0b;
+      --error: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 600px at 15% -10%, #1e293b 0%, transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, #164e63 0%, transparent 60%),
+        var(--bg);
+    }
+    .page { max-width: 1600px; width: 100%; margin: 0 auto; padding: 28px 24px 60px; }
+    .topbar { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:20px; flex-wrap: wrap; }
+    .title { font-family:"Space Grotesk", sans-serif; font-size:24px; margin:0 0 6px; }
+    .subtitle { color: var(--muted); margin:0; font-size:13px; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; margin-left:auto; flex:1 1 320px; }
+    .actions > * { white-space: nowrap; }
+    .btn {
+      text-decoration:none; color:var(--text);
+      padding:8px 12px; border-radius:10px;
+      border:1px solid var(--line); font-size:12px;
+      background: transparent; transition:0.2s ease;
+    }
+    .btn:hover { border-color: var(--accent-2); color:#e2f9ff; }
+    .btn.primary { background: linear-gradient(135deg, #16a34a, #22c55e); color:#04140a; border:none; font-weight:600; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin: 16px 0 24px; }
+    .card {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(11, 18, 32, 0.95));
+      border:1px solid var(--line); border-radius:16px; padding:16px;
+      box-shadow: 0 18px 40px rgba(2,6,23,0.45);
+    }
+    .card h2 { font-family:"Space Grotesk", sans-serif; font-size:16px; margin:0 0 10px; }
+    .stat { font-size:20px; font-family:"Space Grotesk", sans-serif; margin:0; }
+    .stat-label { color: var(--muted); font-size:12px; }
+    .pill {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 10px; border-radius:999px; font-size:12px;
+      border:1px solid rgba(34,197,94,0.35);
+      background: rgba(34,197,94,0.12); color:#86efac;
+    }
+    .pill.warn { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.12); color:#fcd34d; }
+    .pill.err { border-color: rgba(248,113,113,0.35); background: rgba(248,113,113,0.12); color:#fecaca; }
+    .table { width:100%; border-collapse: collapse; font-size:12px; }
+    .table th, .table td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align: middle; }
+    .table th { color:var(--muted); font-size:11px; font-weight:600; }
+    input, select {
+      width: 100%;
+      background: #0b1220;
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+    .inline-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .note { color: var(--muted); font-size: 12px; }
+    .tag {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:2px 8px; border-radius:999px; font-size:11px;
+      border:1px solid rgba(6,182,212,0.3); color:#a5f3fc;
+      background: rgba(6,182,212,0.15);
+    }
+    .tag.warn { border-color: rgba(245,158,11,0.3); color:#fcd34d; background: rgba(245,158,11,0.15); }
+    .tag.err { border-color: rgba(248,113,113,0.3); color:#fecaca; background: rgba(248,113,113,0.15); }
+    .actions-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .error { color: var(--error); font-size: 12px; }
+    .key-output {
+      margin-top: 10px;
+      background: #0b1220;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 12px;
+      word-break: break-all;
+    }
+    .stack { display: grid; gap: 18px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div>
+        <h1 class="title" data-i18n="access_title">Accès & sécurité - Call2EDS</h1>
+        <p class="subtitle" data-i18n="access_subtitle">Gérer les comptes, clés API et journaux.</p>
+      </div>
+      <div class="actions">
+        <select id="uiLang">
+          <option value="fr">FR</option>
+          <option value="en">EN</option>
+        </select>
+        <a class="btn" href="/" data-i18n="back">Retour</a>
+        <a class="btn" href="/logout" data-i18n="logout">Se déconnecter</a>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <h2 data-i18n="auth_status_title">Statut sécurité</h2>
+        {% if auth_enabled %}
+          <span class="pill" data-i18n="auth_enabled">Actif</span>
+        {% else %}
+          <span class="pill warn" data-i18n="auth_disabled">Inactif</span>
+          <p class="note" data-i18n="auth_enable_note" style="margin-top:10px;">Activez l'authentification pour exiger un login.</p>
+          <div class="inline-row" style="margin-top:10px;">
+            <button class="btn primary" id="enable-auth" data-i18n="auth_enable_btn">Activer la sécurité</button>
+            <label class="inline-row" style="gap:6px;">
+              <input type="checkbox" id="enable-auth-persist" checked>
+              <span class="note" data-i18n="auth_enable_persist">Persister dans .env.secrets</span>
+            </label>
+          </div>
+          <div class="error" id="auth-enable-error"></div>
+        {% endif %}
+        <p class="stat-label"><span data-i18n="auth_ttl">TTL session</span> · {{ auth_ttl_s }}s</p>
+      </div>
+      <div class="card">
+        <h2 data-i18n="users_title">Utilisateurs</h2>
+        <p class="stat">{{ users_count }}</p>
+        <p class="stat-label" data-i18n="users_note">Comptes actifs (admin / viewer).</p>
+      </div>
+      <div class="card">
+        <h2 data-i18n="keys_title">Clés API</h2>
+        <p class="stat">{{ keys_count }}</p>
+        <p class="stat-label" data-i18n="keys_note">Accès API via header X-API-Key.</p>
+      </div>
+    </section>
+
+    <div class="stack">
+      <section class="card">
+        <h2 data-i18n="users_manage_title">Gestion des utilisateurs</h2>
+        <p class="note" data-i18n="users_manage_note">Créer, modifier ou supprimer des comptes. Le dernier admin ne peut pas être supprimé.</p>
+        <div class="inline-row" style="margin-bottom:12px;">
+          <input type="text" id="new-username" placeholder="username">
+          <input type="password" id="new-password" placeholder="password">
+          <select id="new-role">
+            <option value="admin" data-i18n="role_admin">admin</option>
+            <option value="viewer" data-i18n="role_viewer">viewer</option>
+          </select>
+          <label class="inline-row" style="gap:6px;">
+            <input type="checkbox" id="new-can-api" checked>
+            <span class="note" data-i18n="can_api">API</span>
+          </label>
+          <button class="btn primary" id="create-user" data-i18n="create_user">Créer</button>
+        </div>
+        <div class="error" id="users-error"></div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th data-i18n="th_user">User</th>
+              <th data-i18n="th_role">Role</th>
+              <th data-i18n="th_api">API</th>
+              <th data-i18n="th_created">Créé</th>
+              <th data-i18n="th_last_login">Dernier login</th>
+              <th data-i18n="th_actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-body"></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="keys_manage_title">Clés API</h2>
+        <p class="note" data-i18n="keys_manage_note">Header supporté : <code>X-API-Key</code> ou <code>Authorization: Bearer</code>.</p>
+        <div class="inline-row" style="margin-bottom:12px;">
+          <select id="key-user"></select>
+          <input type="text" id="key-name" placeholder="name">
+          <button class="btn primary" id="create-key" data-i18n="create_key">Créer une clé</button>
+        </div>
+        <div class="error" id="keys-error"></div>
+        <div class="key-output" id="key-output" style="display:none;"></div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th data-i18n="th_user">User</th>
+              <th data-i18n="th_prefix">Prefix</th>
+              <th data-i18n="th_name">Nom</th>
+              <th data-i18n="th_created">Créé</th>
+              <th data-i18n="th_last_used">Dernier usage</th>
+              <th data-i18n="th_status">Statut</th>
+              <th data-i18n="th_actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="keys-body"></tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="events_title">Journal sécurité</h2>
+        <p class="note" data-i18n="events_note">Derniers événements d'authentification.</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th data-i18n="th_event">Event</th>
+              <th data-i18n="th_user">User</th>
+              <th data-i18n="th_ip">IP</th>
+              <th data-i18n="th_created">Créé</th>
+              <th data-i18n="th_details">Détails</th>
+            </tr>
+          </thead>
+          <tbody id="events-body"></tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const FALLBACK = {
+      fr: {
+        access_title: "Accès & sécurité - Call2EDS",
+        access_subtitle: "Gérer les comptes, clés API et journaux.",
+        back: "Retour",
+        logout: "Se déconnecter",
+        auth_status_title: "Statut sécurité",
+        auth_enabled: "Actif",
+        auth_disabled: "Inactif",
+        auth_ttl: "TTL session",
+        users_title: "Utilisateurs",
+        users_note: "Comptes actifs (admin / viewer).",
+        keys_title: "Clés API",
+        keys_note: "Accès API via header X-API-Key.",
+        users_manage_title: "Gestion des utilisateurs",
+        users_manage_note: "Créer, modifier ou supprimer des comptes. Le dernier admin ne peut pas être supprimé.",
+        role_admin: "admin",
+        role_viewer: "viewer",
+        can_api: "API",
+        create_user: "Créer",
+        th_user: "User",
+        th_role: "Role",
+        th_api: "API",
+        th_created: "Créé",
+        th_last_login: "Dernier login",
+        th_actions: "Actions",
+        user_delete: "Supprimer",
+        user_reset: "Reset MDP",
+        api_toggle_on: "API ON",
+        api_toggle_off: "API OFF",
+        keys_manage_title: "Clés API",
+        keys_manage_note: "Header supporté : X-API-Key ou Authorization: Bearer.",
+        create_key: "Créer une clé",
+        th_prefix: "Prefix",
+        th_name: "Nom",
+        th_last_used: "Dernier usage",
+        key_revoke: "Révoquer",
+        key_active: "Active",
+        key_revoked: "Révoquée",
+        events_title: "Journal sécurité",
+        events_note: "Derniers événements d'authentification.",
+        th_event: "Event",
+        th_ip: "IP",
+        th_details: "Détails",
+        users_error: "Erreur users: {err}",
+        keys_error: "Erreur clés: {err}",
+        events_error: "Erreur logs: {err}",
+        key_created: "Clé créée (copiez-la maintenant, elle ne sera plus affichée) :",
+        auth_enable_note: "Activez l'authentification pour exiger un login.",
+        auth_enable_btn: "Activer la sécurité",
+        auth_enable_persist: "Persister dans .env.secrets",
+        auth_enable_confirm: "Activer la sécurité ?",
+        auth_enable_error: "Erreur activation: {err}"
+      },
+      en: {
+        access_title: "Access & security - Call2EDS",
+        access_subtitle: "Manage users, API keys and logs.",
+        back: "Back",
+        logout: "Sign out",
+        auth_status_title: "Security status",
+        auth_enabled: "Enabled",
+        auth_disabled: "Disabled",
+        auth_ttl: "Session TTL",
+        users_title: "Users",
+        users_note: "Active accounts (admin / viewer).",
+        keys_title: "API keys",
+        keys_note: "API access via X-API-Key header.",
+        users_manage_title: "User management",
+        users_manage_note: "Create, update, or delete accounts. The last admin cannot be removed.",
+        role_admin: "admin",
+        role_viewer: "viewer",
+        can_api: "API",
+        create_user: "Create",
+        th_user: "User",
+        th_role: "Role",
+        th_api: "API",
+        th_created: "Created",
+        th_last_login: "Last login",
+        th_actions: "Actions",
+        user_delete: "Delete",
+        user_reset: "Reset password",
+        api_toggle_on: "API ON",
+        api_toggle_off: "API OFF",
+        keys_manage_title: "API keys",
+        keys_manage_note: "Supported header: X-API-Key or Authorization: Bearer.",
+        create_key: "Create key",
+        th_prefix: "Prefix",
+        th_name: "Name",
+        th_last_used: "Last used",
+        key_revoke: "Revoke",
+        key_active: "Active",
+        key_revoked: "Revoked",
+        events_title: "Security log",
+        events_note: "Latest authentication events.",
+        th_event: "Event",
+        th_ip: "IP",
+        th_details: "Details",
+        users_error: "Users error: {err}",
+        keys_error: "Keys error: {err}",
+        events_error: "Logs error: {err}",
+        key_created: "Key created (copy now, it will not be shown again):",
+        auth_enable_note: "Enable authentication to require a login.",
+        auth_enable_btn: "Enable security",
+        auth_enable_persist: "Persist to .env.secrets",
+        auth_enable_confirm: "Enable security?",
+        auth_enable_error: "Enable error: {err}"
+      }
+    };
+
+    let STRINGS = null;
+    const uiLang = document.getElementById("uiLang");
+    const storedLang = localStorage.getItem("call2eds_ui_lang") || "fr";
+    let currentLang = storedLang;
+
+    function format(str, vars) {
+      return String(str).replace(/\{(\w+)\}/g, (_, key) => (vars[key] ?? `{${key}}`));
+    }
+
+    function dict() {
+      return STRINGS ? (STRINGS[currentLang] || STRINGS.fr) : (FALLBACK[currentLang] || FALLBACK.fr);
+    }
+
+    const APP_TITLE = "Call2EDS";
+
+    function applyLanguage(lang) {
+      const d = dict();
+      document.documentElement.lang = lang;
+      document.title = APP_TITLE;
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        if (!key || !d[key]) return;
+        el.textContent = d[key];
+      });
+    }
+
+    async function loadStrings() {
+      try {
+        const res = await fetch("/static/i18n/app.json");
+        if (!res.ok) throw new Error("i18n");
+        const data = await res.json();
+        STRINGS = data.access || null;
+      } catch (err) {
+        STRINGS = null;
+      }
+      applyLanguage(currentLang);
+    }
+
+    async function fetchJson(url, opts = {}) {
+      const res = await fetch(url, { credentials: "same-origin", ...opts });
+      if (!res.ok) {
+        let detail = "";
+        try {
+          const data = await res.clone().json();
+          if (data && data.detail) detail = String(data.detail);
+        } catch (err) {
+          detail = "";
+        }
+        throw new Error(detail || `${url} (${res.status})`);
+      }
+      return res.json();
+    }
+
+    function authErrorText(err) {
+      const d = dict();
+      const msg = (err && err.message) ? String(err.message) : "";
+      if (msg.includes("cannot delete last admin")) {
+        return d.last_admin_delete || "Impossible de supprimer le dernier admin.";
+      }
+      if (msg.includes("cannot remove last admin")) {
+        return d.last_admin_demote || "Impossible de retirer le rôle admin du dernier admin.";
+      }
+      return msg;
+    }
+
+    function fmtDate(val) {
+      if (!val) return "-";
+      try {
+        return new Date(val).toLocaleString();
+      } catch (err) {
+        return val;
+      }
+    }
+
+    function renderUsers(items) {
+      const body = document.getElementById("users-body");
+      const userSelect = document.getElementById("key-user");
+      body.innerHTML = "";
+      userSelect.innerHTML = "";
+      items.forEach((user) => {
+        const tr = document.createElement("tr");
+        const roleSelect = document.createElement("select");
+        ["admin", "viewer"].forEach((role) => {
+          const opt = document.createElement("option");
+          opt.value = role;
+          opt.textContent = role;
+          if (user.role === role) opt.selected = true;
+          roleSelect.appendChild(opt);
+        });
+        roleSelect.addEventListener("change", () => updateUser(user.id, { role: roleSelect.value }));
+
+        const apiBtn = document.createElement("button");
+        apiBtn.className = "btn";
+        const d = dict();
+        apiBtn.textContent = user.can_api ? (d.api_toggle_on || "API ON") : (d.api_toggle_off || "API OFF");
+        apiBtn.addEventListener("click", () => updateUser(user.id, { can_api: !user.can_api }));
+
+        const resetBtn = document.createElement("button");
+        resetBtn.className = "btn";
+        resetBtn.textContent = d.user_reset || "Reset";
+        resetBtn.addEventListener("click", () => {
+          const next = window.prompt("New password for " + user.username);
+          if (!next) return;
+          updateUser(user.id, { password: next });
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn";
+        delBtn.textContent = d.user_delete || "Delete";
+        delBtn.addEventListener("click", () => deleteUser(user.id));
+
+        tr.innerHTML = `
+          <td>${user.username}</td>
+          <td></td>
+          <td></td>
+          <td>${fmtDate(user.created_at)}</td>
+          <td>${fmtDate(user.last_login_at)}</td>
+          <td class="actions-row"></td>
+        `;
+        tr.children[1].appendChild(roleSelect);
+        tr.children[2].appendChild(apiBtn);
+        tr.children[5].appendChild(resetBtn);
+        tr.children[5].appendChild(delBtn);
+        body.appendChild(tr);
+
+        const opt = document.createElement("option");
+        opt.value = user.id;
+        opt.textContent = user.username;
+        userSelect.appendChild(opt);
+      });
+    }
+
+    function renderKeys(items) {
+      const body = document.getElementById("keys-body");
+      body.innerHTML = "";
+      const d = dict();
+      items.forEach((item) => {
+        const tr = document.createElement("tr");
+        const status = item.revoked_at ? "revoked" : "active";
+        const statusLabel = status === "active" ? (d.key_active || "Active") : (d.key_revoked || "Revoked");
+        const statusTag = `<span class="tag ${status === "active" ? "" : "warn"}">${statusLabel}</span>`;
+        tr.innerHTML = `
+          <td>${item.username}</td>
+          <td>${item.prefix}</td>
+          <td>${item.name || "-"}</td>
+          <td>${fmtDate(item.created_at)}</td>
+          <td>${fmtDate(item.last_used_at)}</td>
+          <td>${statusTag}</td>
+          <td class="actions-row"></td>
+        `;
+        if (!item.revoked_at) {
+          const btn = document.createElement("button");
+          btn.className = "btn";
+          btn.textContent = d.key_revoke || "Revoke";
+          btn.addEventListener("click", () => revokeKey(item.id));
+          tr.children[6].appendChild(btn);
+        }
+        body.appendChild(tr);
+      });
+    }
+
+    function renderEvents(items) {
+      const body = document.getElementById("events-body");
+      body.innerHTML = "";
+      items.forEach((item) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.event}</td>
+          <td>${item.username || "-"}</td>
+          <td>${item.ip || "-"}</td>
+          <td>${fmtDate(item.created_at)}</td>
+          <td>${item.details ? JSON.stringify(item.details) : "-"}</td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    async function loadAll() {
+      const d = dict();
+      try {
+        const users = await fetchJson("/api/auth/users");
+        renderUsers(users.items || []);
+      } catch (err) {
+        document.getElementById("users-error").textContent = format(d.users_error || FALLBACK.fr.users_error, { err: err.message });
+      }
+      try {
+        const keys = await fetchJson("/api/auth/keys");
+        renderKeys(keys.items || []);
+      } catch (err) {
+        document.getElementById("keys-error").textContent = format(d.keys_error || FALLBACK.fr.keys_error, { err: err.message });
+      }
+      try {
+        const events = await fetchJson("/api/auth/events");
+        renderEvents(events.items || []);
+      } catch (err) {
+        document.getElementById("keys-error").textContent = format(d.events_error || FALLBACK.fr.events_error, { err: err.message });
+      }
+    }
+
+    async function updateUser(userId, payload) {
+      const d = dict();
+      try {
+        const safePayload = payload || {};
+        await fetchJson(`/api/auth/users/${userId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(safePayload)
+        });
+        await loadAll();
+      } catch (err) {
+        const msg = authErrorText(err);
+        document.getElementById("users-error").textContent = format(d.users_error || FALLBACK.fr.users_error, { err: msg });
+      }
+    }
+
+    async function deleteUser(userId) {
+      const d = dict();
+      if (!confirm("Delete user ?")) return;
+      try {
+        await fetchJson(`/api/auth/users/${userId}`, { method: "DELETE" });
+        await loadAll();
+      } catch (err) {
+        const msg = authErrorText(err);
+        document.getElementById("users-error").textContent = format(d.users_error || FALLBACK.fr.users_error, { err: msg });
+      }
+    }
+
+    async function createUser() {
+      const d = dict();
+      const username = document.getElementById("new-username").value.trim();
+      const password = document.getElementById("new-password").value.trim();
+      const role = document.getElementById("new-role").value;
+      const canApi = document.getElementById("new-can-api").checked;
+      try {
+        await fetchJson("/api/auth/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password, role, can_api: canApi })
+        });
+        document.getElementById("new-username").value = "";
+        document.getElementById("new-password").value = "";
+        await loadAll();
+      } catch (err) {
+        document.getElementById("users-error").textContent = format(d.users_error || FALLBACK.fr.users_error, { err: err.message });
+      }
+    }
+
+    async function createKey() {
+      const d = dict();
+      const userId = document.getElementById("key-user").value;
+      const name = document.getElementById("key-name").value.trim();
+      const output = document.getElementById("key-output");
+      output.style.display = "none";
+      try {
+        const data = await fetchJson("/api/auth/keys", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, name })
+        });
+        output.textContent = `${d.key_created || FALLBACK.fr.key_created} ${data.key}`;
+        output.style.display = "block";
+        document.getElementById("key-name").value = "";
+        await loadAll();
+      } catch (err) {
+        document.getElementById("keys-error").textContent = format(d.keys_error || FALLBACK.fr.keys_error, { err: err.message });
+      }
+    }
+
+    async function revokeKey(keyId) {
+      const d = dict();
+      if (!confirm("Revoke key ?")) return;
+      try {
+        await fetchJson(`/api/auth/keys/${keyId}/revoke`, { method: "POST" });
+        await loadAll();
+      } catch (err) {
+        document.getElementById("keys-error").textContent = format(d.keys_error || FALLBACK.fr.keys_error, { err: err.message });
+      }
+    }
+
+    async function enableAuth() {
+      const d = dict();
+      const persistEl = document.getElementById("enable-auth-persist");
+      const persist = persistEl ? persistEl.checked : true;
+      if (!confirm(d.auth_enable_confirm || FALLBACK.fr.auth_enable_confirm)) return;
+      try {
+        const data = await fetchJson("/api/auth/enable", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ persist })
+        });
+        if (data && data.redirect) {
+          window.location.href = data.redirect;
+        } else {
+          window.location.reload();
+        }
+      } catch (err) {
+        const el = document.getElementById("auth-enable-error");
+        if (el) {
+          el.textContent = format(d.auth_enable_error || FALLBACK.fr.auth_enable_error, { err: err.message });
+        }
+      }
+    }
+
+    if (uiLang) {
+      uiLang.value = storedLang;
+      uiLang.addEventListener("change", (e) => {
+        currentLang = e.target.value;
+        localStorage.setItem("call2eds_ui_lang", currentLang);
+        applyLanguage(currentLang);
+      });
+    }
+
+    document.getElementById("create-user").addEventListener("click", (e) => {
+      e.preventDefault();
+      createUser();
+    });
+    document.getElementById("create-key").addEventListener("click", (e) => {
+      e.preventDefault();
+      createKey();
+    });
+    const enableBtn = document.getElementById("enable-auth");
+    if (enableBtn) {
+      enableBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        enableAuth();
+      });
+    }
+
+    loadStrings().then(loadAll);
+  </script>
+</body>
+</html>

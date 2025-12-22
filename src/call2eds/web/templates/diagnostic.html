@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call2EDS</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1120;
+      --panel: #0e1626;
+      --muted: #94a3b8;
+      --text: #e2e8f0;
+      --line: #1f2937;
+      --accent: #22c55e;
+      --accent-2: #06b6d4;
+      --warn: #f59e0b;
+      --error: #f87171;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1000px 600px at 15% -10%, #1e293b 0%, transparent 60%),
+        radial-gradient(900px 600px at 90% 10%, #164e63 0%, transparent 60%),
+        var(--bg);
+    }
+    .page { max-width: 1600px; width: 100%; margin: 0 auto; padding: 28px 24px 60px; }
+    .topbar { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:20px; flex-wrap: wrap; }
+    .title { font-family:"Space Grotesk", sans-serif; font-size:24px; margin:0 0 6px; }
+    .subtitle { color: var(--muted); margin:0; font-size:13px; }
+    .actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end; margin-left:auto; flex:1 1 320px; }
+    .actions > * { white-space: nowrap; }
+    .btn {
+      text-decoration:none; color:var(--text);
+      padding:8px 12px; border-radius:10px;
+      border:1px solid var(--line); font-size:12px;
+      background: transparent; transition:0.2s ease;
+    }
+    .btn:hover { border-color: var(--accent-2); color:#e2f9ff; }
+    .btn.primary { background: linear-gradient(135deg, #16a34a, #22c55e); color:#04140a; border:none; font-weight:600; }
+    .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin: 16px 0 24px; }
+    .card {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(11, 18, 32, 0.95));
+      border:1px solid var(--line); border-radius:16px; padding:16px;
+      box-shadow: 0 18px 40px rgba(2,6,23,0.45);
+    }
+    .card h2 { font-family:"Space Grotesk", sans-serif; font-size:16px; margin:0 0 10px; }
+    .stat { font-size:20px; font-family:"Space Grotesk", sans-serif; margin:0; }
+    .stat-label { color: var(--muted); font-size:12px; }
+    .pill {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 10px; border-radius:999px; font-size:12px;
+      border:1px solid rgba(34,197,94,0.35);
+      background: rgba(34,197,94,0.12); color:#86efac;
+    }
+    .pill.warn { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.12); color:#fcd34d; }
+    .pill.err { border-color: rgba(248,113,113,0.35); background: rgba(248,113,113,0.12); color:#fecaca; }
+    .table { width:100%; border-collapse: collapse; font-size:12px; }
+    .table th, .table td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); vertical-align: top; }
+    .table th { color:var(--muted); font-size:11px; font-weight:600; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
+    input, select {
+      width: 100%;
+      background: #0b1220;
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+    .inline-row { display: flex; gap: 10px; align-items: center; }
+    .inline-row input { flex: 1; }
+    .inline-row .btn { height: 34px; }
+    .kv {
+      display:grid;
+      grid-template-columns: 120px 1fr;
+      gap: 8px;
+      align-items: start;
+      margin-bottom: 4px;
+    }
+    .kv span { color: var(--muted); font-size: 11px; }
+    .kv code { font-size: 11px; color: #cbd5f5; word-break: break-all; }
+    details { margin-top: 12px; }
+    summary { cursor:pointer; font-size:12px; color:#cbd5f5; }
+    pre {
+      white-space: pre-wrap;
+      background: #0b1220;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 11px;
+      color: #cbd5f5;
+    }
+    .empty { color: var(--muted); font-size: 12px; }
+    .note { color: var(--muted); font-size: 12px; }
+    .muted { color: var(--muted); font-size: 11px; display: block; margin-top: 4px; }
+    .config-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+    .config-actions .btn { font-size:12px; }
+    .config-pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:#cbd5f5; }
+    .config-pill input { width:auto; margin:0; }
+    .tag {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:2px 8px; border-radius:999px; font-size:11px;
+      border:1px solid rgba(6,182,212,0.3); color:#a5f3fc;
+      background: rgba(6,182,212,0.15);
+    }
+    .stack { display: grid; gap: 18px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div>
+        <h1 class="title" data-i18n="page_title">Paramètres & état - Call2EDS</h1>
+        <p class="subtitle" data-i18n="subtitle">État pipeline, services, modèles et paramètres.</p>
+      </div>
+      <div class="actions">
+        <select id="uiLang">
+          <option value="fr">FR</option>
+          <option value="en">EN</option>
+        </select>
+        <a class="btn" href="/" data-i18n="back">Retour</a>
+        <a class="btn" href="/access" data-i18n="access">Accès</a>
+        {% if user %}
+          <a class="btn" href="/logout" data-i18n="logout">Se déconnecter</a>
+        {% endif %}
+        <a class="btn primary" href="/diagnostic?format=json" data-i18n="raw_json_btn">JSON brut</a>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <h2 data-i18n="status_title">Statut</h2>
+        {% if diag.status == "ok" %}
+          <span class="pill">OK</span>
+        {% else %}
+          <span class="pill err">{{ diag.status }}</span>
+        {% endif %}
+        <p class="stat-label" data-i18n="pipeline_version" data-i18n-version="{{ diag.pipeline_version }}">Pipeline v{{ diag.pipeline_version }}</p>
+      </div>
+      <div class="card">
+        <h2 data-i18n="minio_title">MinIO</h2>
+        <p class="stat">{{ diag.minio_bucket }}</p>
+        <p class="stat-label">{{ diag.minio_endpoint }}</p>
+        <p class="stat-label">{{ diag.minio_public_endpoint }}</p>
+        <p class="stat-label">{{ diag.minio_console_public_endpoint }}</p>
+        <p class="note" data-i18n="minio_sources">Sources : MINIO_PUBLIC_ENDPOINT / MINIO_CONSOLE_PUBLIC_ENDPOINT</p>
+      </div>
+      <div class="card">
+        <h2 data-i18n="auth_title">Sécurité</h2>
+        {% if diag.auth.enabled %}
+          <span class="pill" data-i18n="auth_enabled">Actif</span>
+        {% else %}
+          <span class="pill warn" data-i18n="auth_disabled">Inactif</span>
+        {% endif %}
+        <p class="stat-label"><span data-i18n="auth_users_label">Utilisateurs</span> · {{ diag.auth.users }}</p>
+        <p class="stat-label"><span data-i18n="auth_keys_label">Clés API</span> · {{ diag.auth.api_keys }}</p>
+        <p class="stat-label"><span data-i18n="auth_ttl_label">TTL session</span> · {{ diag.auth.ttl_s }}s</p>
+        <a class="btn" href="/access" data-i18n="access">Accès</a>
+      </div>
+      <div class="card">
+        <h2 data-i18n="service_checks_title">Service checks</h2>
+        {% if diag.report is mapping %}
+          <p class="stat">{{ diag.report | length }}</p>
+          <p class="stat-label" data-i18n="tests_available">tests disponibles</p>
+        {% else %}
+          <p class="stat">1</p>
+          <p class="stat-label" data-i18n="raw_report">rapport brut</p>
+        {% endif %}
+      </div>
+      <div class="card">
+        <h2 data-i18n="diar_env_title">Env diarisation</h2>
+        <p class="stat">{{ diag.diarization_env | length }}</p>
+        <p class="stat-label" data-i18n="active_vars">variables actives</p>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2 data-i18n="checks_title">Checks</h2>
+        {% if diag.report is mapping %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th data-i18n="th_service">Service</th>
+                <th data-i18n="th_status">Statut</th>
+                <th data-i18n="th_details">Détails</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for name, payload in diag.report.items() %}
+              <tr>
+                <td><code>{{ name }}</code></td>
+                <td>
+                  {% if payload is mapping and payload.get("ok") %}
+                    <span class="pill">OK</span>
+                  {% elif payload is mapping %}
+                    <span class="pill warn">KO</span>
+                  {% else %}
+                    <span class="pill warn">?</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if payload is mapping %}
+                    {% for k, v in payload.items() %}
+                      <div class="kv">
+                        <span>{{ k }}</span>
+                        <code>{{ v }}</code>
+                      </div>
+                    {% endfor %}
+                  {% else %}
+                    <code>{{ payload }}</code>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <pre>{{ diag.report }}</pre>
+        {% endif %}
+      </div>
+
+      <div class="card" id="system">
+        <h2 data-i18n="system_title">Ressources système</h2>
+        <p class="note" data-i18n="system_note">CPU / RAM / disque / GPU (détection automatique).</p>
+        <table class="table">
+          <tbody>
+            <tr>
+              <td><strong data-i18n="cpu_label">CPU</strong></td>
+              <td id="sys-cpu">…</td>
+            </tr>
+            <tr>
+              <td><strong data-i18n="ram_label">RAM</strong></td>
+              <td id="sys-ram">…</td>
+            </tr>
+            <tr>
+              <td><strong data-i18n="disk_label">Disque</strong></td>
+              <td id="sys-disk">…</td>
+            </tr>
+            <tr>
+              <td><strong data-i18n="gpu_label">GPU</strong></td>
+              <td id="sys-gpu">…</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="note" id="gpu-note"></p>
+        <div class="config-actions">
+          <button class="btn" id="restart-app" data-i18n="restart_app">Restart app</button>
+          <span class="note" id="restart-status"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="auth-quickstart">
+      <h2 data-i18n="auth_qs_title">Auth quickstart</h2>
+      <p class="note" data-i18n="auth_qs_note">Activez la sécurité puis créez un admin pour débloquer l'accès.</p>
+      <pre data-i18n="auth_qs_steps">1) /access → Activer la sécurité
+2) /setup → créer l'admin
+3) /login → se connecter
+4) API → X-API-Key ou Bearer</pre>
+    </section>
+
+    <div class="stack">
+    <section class="card" id="models">
+      <h2 data-i18n="models_title">Modèles ASR</h2>
+      <p class="note" data-i18n="models_note">Cache local des modèles faster‑whisper (tiny/small/medium/large).</p>
+      <table class="table">
+          <thead>
+            <tr>
+              <th data-i18n="th_model">model</th>
+              <th data-i18n="th_status">Statut</th>
+              <th data-i18n="th_size">Taille</th>
+              <th data-i18n="th_actions">actions</th>
+            </tr>
+          </thead>
+          <tbody id="models-body">
+            <tr><td colspan="4" class="empty" data-i18n="models_loading">Chargement…</td></tr>
+          </tbody>
+      </table>
+      <p class="note" id="models-status"></p>
+      <p class="note" id="models-token-note"></p>
+    </section>
+
+      <section class="card" id="config">
+        <h2 data-i18n="config_title">Paramètres</h2>
+        <p class="note" data-i18n-html="config_note">
+          Modifie les variables runtime (diarisation, ASR, etc). Optionnel : persister dans
+          <code>.env.secrets</code>. Certaines options demandent un restart pour être prises en compte.
+        </p>
+      <p class="note" id="config-summary"></p>
+      <label data-i18n="minio_url_label">URL console MinIO (optionnel)</label>
+      <div class="inline-row">
+        <input type="url" id="minioUrlInput" placeholder="http://docker.jardine.app:19001">
+        <button class="btn" type="button" id="minioUrlApply" data-i18n="apply">Appliquer</button>
+      </div>
+      <p class="note" data-i18n="minio_url_help">Utilisé pour le bouton “MinIO Console”. Laissez vide pour l’URL par défaut.</p>
+      <label data-i18n="hf_token_label">Hugging Face token (optionnel)</label>
+      <div class="inline-row">
+        <input type="password" id="hfTokenInput" placeholder="hf_********">
+        <button class="btn" type="button" id="hfTokenSave" data-i18n="save">Sauvegarder</button>
+        <button class="btn" type="button" id="hfTokenClear" data-i18n="clear">Effacer</button>
+      </div>
+      <p class="note" id="hfTokenStatus" data-i18n="hf_token_help">Requis si le serveur ne peut pas télécharger les modèles sans authentification.</p>
+      <table class="table" id="config-table">
+        <thead>
+            <tr>
+              <th data-i18n="th_variable">Variable</th>
+              <th data-i18n="th_value">Valeur</th>
+              <th data-i18n="th_info">Info</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div class="config-actions">
+          <button class="btn" id="add-config" data-i18n="add_var">Ajouter variable</button>
+          <label class="config-pill">
+            <input type="checkbox" id="persist-config">
+            <span data-i18n="persist_label">Persister dans .env.secrets</span>
+          </label>
+          <button class="btn primary" id="save-config" data-i18n="save_config">Sauvegarder</button>
+          <span class="note" id="save-status"></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="raw_json_title">JSON brut</h2>
+        <details>
+          <summary data-i18n="raw_json_show">Afficher le JSON complet</summary>
+          <pre>{{ diag | tojson(indent=2) }}</pre>
+        </details>
+      </section>
+    </div>
+  </div>
+  <script>
+    const FALLBACK_STRINGS = {
+      fr: {
+        api_ko: "API KO",
+        error_prefix: "erreur",
+        load_label: "charge",
+        cores_label: "coeurs",
+        gpu_note_auto: "GPU détecté · usage auto activé (CALL2EDS_DEVICE=auto).",
+        gpu_note_device: "GPU détecté · device={device} (modifie CALL2EDS_DEVICE si besoin).",
+        gpu_note_none: "GPU non détecté · exécution CPU.",
+        save_start: "Sauvegarde…",
+        save_ok: "OK - paramètres appliqués.",
+        save_error: "Erreur: {err}",
+        restart_start: "Restart en cours…",
+        restart_ok: "OK - app redémarrée.",
+        restart_error: "Erreur: {err}",
+        config_summary: "Defaults · model={model} · lang={lang} · {persist}",
+        persist_info: "persist={path}",
+        persist_unavailable: "persist indisponible",
+        custom_var: "variable custom",
+        gpu_none: "Aucun GPU détecté",
+        gpu_detected: "GPU détecté",
+        model_status_installed: "Installé",
+        model_status_missing: "Non installé",
+        model_status_downloading: "Téléchargement…",
+        model_status_error: "Erreur",
+        model_download: "Télécharger",
+        model_retry: "Réessayer",
+        model_downloading: "Téléchargement…",
+        model_size_unknown: "n/a",
+        models_loading: "Chargement…",
+        models_error: "Erreur: {err}",
+        model_error_details: "Détails: {err}"
+      },
+      en: {
+        api_ko: "API KO",
+        error_prefix: "error",
+        load_label: "load",
+        cores_label: "cores",
+        gpu_note_auto: "GPU detected · auto usage enabled (CALL2EDS_DEVICE=auto).",
+        gpu_note_device: "GPU detected · device={device} (change CALL2EDS_DEVICE if needed).",
+        gpu_note_none: "No GPU detected · CPU execution.",
+        save_start: "Saving…",
+        save_ok: "OK - settings applied.",
+        save_error: "Error: {err}",
+        restart_start: "Restarting…",
+        restart_ok: "OK - app restarted.",
+        restart_error: "Error: {err}",
+        config_summary: "Defaults · model={model} · lang={lang} · {persist}",
+        persist_info: "persist={path}",
+        persist_unavailable: "persist unavailable",
+        custom_var: "custom variable",
+        gpu_none: "No GPU detected",
+        gpu_detected: "GPU detected",
+        model_status_installed: "Installed",
+        model_status_missing: "Not installed",
+        model_status_downloading: "Downloading…",
+        model_status_error: "Error",
+        model_download: "Download",
+        model_retry: "Retry",
+        model_downloading: "Downloading…",
+        model_size_unknown: "n/a",
+        models_loading: "Loading…",
+        models_error: "Error: {err}",
+        model_error_details: "Details: {err}"
+      }
+    };
+    let STRINGS = null;
+
+    const uiLang = document.getElementById("uiLang");
+    const storedLang = localStorage.getItem("call2eds_ui_lang") || "fr";
+    let currentLang = storedLang;
+    let lastSystem = null;
+    let lastConfig = null;
+    let lastModels = null;
+    let modelsTimer = null;
+
+    function format(str, vars) {
+      return String(str).replace(/\{(\w+)\}/g, (_, key) => (vars[key] ?? `{${key}}`));
+    }
+
+    function dict() {
+      return STRINGS ? (STRINGS[currentLang] || STRINGS.fr) : (FALLBACK_STRINGS[currentLang] || FALLBACK_STRINGS.fr);
+    }
+
+    const APP_TITLE = "Call2EDS";
+
+    function applyLanguage(lang) {
+      if (!STRINGS) return;
+      const d = STRINGS[lang] || STRINGS.fr;
+      document.documentElement.lang = lang;
+      document.title = APP_TITLE;
+
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        if (!key || !d[key]) return;
+        const version = el.getAttribute("data-i18n-version");
+        let text = d[key];
+        if (version) text = format(text, { version });
+        el.textContent = text;
+      });
+      document.querySelectorAll("[data-i18n-html]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-html");
+        if (!key || !d[key]) return;
+        el.innerHTML = d[key];
+      });
+      if (lastModels) renderModels(lastModels);
+    }
+
+    function applyMinioSetting() {
+      const input = document.getElementById("minioUrlInput");
+      if (!input) return;
+      const stored = localStorage.getItem("call2eds_minio_url") || "";
+      input.value = stored.trim();
+    }
+
+    async function loadHfTokenStatus() {
+      const status = document.getElementById("hfTokenStatus");
+      if (!status) return;
+      const d = dict();
+      try {
+        const data = await fetchJson("/api/hf-token");
+        if (data.set) {
+          status.textContent = d.hf_token_set || "Token configuré.";
+        } else {
+          status.textContent = d.hf_token_missing || "Aucun token configuré.";
+        }
+      } catch (err) {
+        status.textContent = d.hf_token_error ? format(d.hf_token_error, { err: err.message }) : `Erreur: ${err.message}`;
+      }
+    }
+
+    async function fetchJson(url, opts = {}) {
+      const res = await fetch(url, opts);
+      if (!res.ok) {
+        throw new Error(`${url} (${res.status})`);
+      }
+      return res.json();
+    }
+
+    function formatBytes(bytes) {
+      if (typeof bytes !== "number" || Number.isNaN(bytes)) return "";
+      const units = ["B", "KB", "MB", "GB"];
+      let size = bytes;
+      let idx = 0;
+      while (size >= 1024 && idx < units.length - 1) {
+        size /= 1024;
+        idx += 1;
+      }
+      return `${size.toFixed(size >= 10 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+    }
+
+    function statusPill(state, label) {
+      const span = document.createElement("span");
+      span.className = "pill";
+      if (state === "missing") span.classList.add("warn");
+      if (state === "error") span.classList.add("err");
+      span.textContent = label;
+      return span;
+    }
+
+    function renderModels(items) {
+      const body = document.getElementById("models-body");
+      if (!body) return;
+      const d = dict();
+      body.innerHTML = "";
+      if (!items || !items.length) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 4;
+        td.className = "empty";
+        td.textContent = d.models_error || "Erreur";
+        tr.appendChild(td);
+        body.appendChild(tr);
+        return;
+      }
+      let hasDownloading = false;
+      items.forEach((item) => {
+        const state = item.state || "missing";
+        if (state === "downloading") hasDownloading = true;
+        const labelMap = {
+          installed: d.model_status_installed,
+          missing: d.model_status_missing,
+          downloading: d.model_status_downloading,
+          error: d.model_status_error,
+        };
+        const label = labelMap[state] || state;
+      const sizeText = item.size_bytes ? formatBytes(item.size_bytes) : (d.model_size_unknown || "n/a");
+        const tr = document.createElement("tr");
+        const actionCell = document.createElement("td");
+
+        if (state === "missing" || state === "error") {
+          const btn = document.createElement("button");
+          btn.className = "btn";
+          btn.textContent = state === "error" ? (d.model_retry || "Réessayer") : (d.model_download || "Télécharger");
+          btn.addEventListener("click", () => downloadModel(item.name));
+          actionCell.appendChild(btn);
+        } else if (state === "downloading") {
+          const tag = document.createElement("span");
+          tag.className = "tag";
+          tag.textContent = d.model_downloading || "Téléchargement…";
+          actionCell.appendChild(tag);
+        } else if (state === "installed") {
+          const tag = document.createElement("span");
+          tag.className = "tag";
+          tag.textContent = "OK";
+          actionCell.appendChild(tag);
+        } else {
+          const tag = document.createElement("span");
+          tag.className = "tag";
+          tag.textContent = d.model_status_error || "Erreur";
+          actionCell.appendChild(tag);
+        }
+
+        tr.innerHTML = `
+          <td><code>${item.name}</code></td>
+          <td></td>
+          <td>${sizeText}</td>
+        `;
+        const statusCell = tr.children[1];
+        statusCell.appendChild(statusPill(state, label));
+        if (state === "error" && item.error) {
+          const shortErr = item.error.length > 140 ? `${item.error.slice(0, 137)}…` : item.error;
+          const err = document.createElement("span");
+          err.className = "muted";
+          err.textContent = format(d.model_error_details || "Details: {err}", { err: shortErr });
+          err.title = item.error;
+          statusCell.appendChild(err);
+        }
+        tr.appendChild(actionCell);
+        body.appendChild(tr);
+      });
+      if (modelsTimer) clearTimeout(modelsTimer);
+      if (hasDownloading) {
+        modelsTimer = setTimeout(loadModels, 2500);
+      }
+    }
+
+    function updateModelsTokenNote(hasToken) {
+      const note = document.getElementById("models-token-note");
+      if (!note) return;
+      const d = dict();
+      if (hasToken) {
+        note.textContent = "";
+        return;
+      }
+      const html = d.models_token_note || "";
+      if (html) {
+        note.innerHTML = html;
+      } else {
+        note.textContent = "Token Hugging Face absent : certains téléchargements peuvent être bloqués.";
+      }
+    }
+
+    async function loadModels() {
+      const status = document.getElementById("models-status");
+      const d = dict();
+      if (status) status.textContent = d.models_loading || "Chargement…";
+      try {
+        const data = await fetchJson("/api/models");
+        lastModels = data.items || [];
+        renderModels(lastModels);
+        try {
+          const token = await fetchJson("/api/hf-token");
+          updateModelsTokenNote(!!token.set);
+        } catch {
+          updateModelsTokenNote(false);
+        }
+        if (status) status.textContent = "";
+      } catch (err) {
+        if (status) status.textContent = format(d.models_error || "Erreur: {err}", { err: err.message });
+      }
+    }
+
+    async function downloadModel(name) {
+      const d = dict();
+      const status = document.getElementById("models-status");
+      if (status) status.textContent = d.model_downloading || "Téléchargement…";
+      try {
+        await fetchJson("/api/models/download", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: name }),
+        });
+        loadModels();
+      } catch (err) {
+        if (status) status.textContent = format(d.models_error || "Erreur: {err}", { err: err.message });
+      }
+    }
+
+    function formatCpu(cpu) {
+      const d = dict();
+      if (!cpu) return d.api_ko;
+      const loads =
+        cpu.load1 !== undefined
+          ? `${d.load_label} ${cpu.load1}/${cpu.load5}/${cpu.load15}`
+          : `${d.load_label} ?`;
+      return `${cpu.count || "?"} ${d.cores_label} · ${loads}`;
+    }
+
+    function formatRam(ram) {
+      const d = dict();
+      if (!ram) return d.api_ko;
+      if (ram.error) return `${d.error_prefix}: ${ram.error}`;
+      return `${ram.used_gb} / ${ram.total_gb} GB (${ram.used_pct}%)`;
+    }
+
+    function formatDisk(disk) {
+      const d = dict();
+      if (!disk) return d.api_ko;
+      if (disk.error) return `${d.error_prefix}: ${disk.error}`;
+      return `${disk.used_gb} / ${disk.total_gb} GB (${disk.used_pct}%) · ${disk.path}`;
+    }
+
+    function formatGpu(gpu) {
+      const d = dict();
+      if (!gpu) return d.api_ko;
+      if (!gpu.available) return d.gpu_none;
+      if (!gpu.gpus || !gpu.gpus.length) return d.gpu_detected;
+      return gpu.gpus
+        .map((g) => {
+          const mem = g.memory_total_mb ? `${g.memory_used_mb}/${g.memory_total_mb} MB` : "";
+          const util = g.util_gpu_pct !== undefined ? `${g.util_gpu_pct}%` : "";
+          return `${g.name}${mem ? " · " + mem : ""}${util ? " · " + util : ""}`;
+        })
+        .join(" | ");
+    }
+
+    const INFO_MAP = {
+      fr: {
+        CALL2EDS_MODEL: "Modèle ASR par défaut (tiny/small/medium/large).",
+        CALL2EDS_LANG: "Langue ASR par défaut (auto/fr/en/...).",
+        CALL2EDS_DEVICE: "Device d'exécution ASR (auto/cuda/cpu).",
+        CALL2EDS_COMPUTE_TYPE: "Type de calcul CTranslate2 (int8_float32, float16...).",
+        CALL2EDS_NO_SPEECH_THRESHOLD: "Seuil no‑speech (plus haut = plus strict).",
+        CALL2EDS_LOGPROB_THRESHOLD: "Seuil log‑prob pour filtrer les segments bruit.",
+        CALL2EDS_VAD_FILTER: "Active le VAD interne de Whisper.",
+        CALL2EDS_DIAR_CLUSTER_METHOD: "Méthode de clustering des embeddings.",
+        CALL2EDS_DIAR_CLUSTER_MIN_SIZE: "Taille minimale d’un cluster (speaker).",
+        CALL2EDS_DIAR_CLUSTER_THRESHOLD: "Seuil de similarité pour fusionner des clusters.",
+        CALL2EDS_DIAR_EARLY_BLOCK_S: "Durée min du bloc initial pour re‑segmentation early (s).",
+        CALL2EDS_DIAR_EARLY_FORCE: "Force la re‑segmentation early même si confiance élevée.",
+        CALL2EDS_DIAR_EARLY_MAX_SPK: "Nb max de speakers pendant la phase early.",
+        CALL2EDS_DIAR_EARLY_PROTO_HOP_S: "Pas (hop) des prototypes early (s).",
+        CALL2EDS_DIAR_EARLY_PROTO_SMOOTH: "Lissage des prototypes early.",
+        CALL2EDS_DIAR_EARLY_PROTO_WIN_S: "Fenêtre des prototypes early (s).",
+        CALL2EDS_DIAR_EARLY_WINDOW_S: "Fenêtre d’analyse early (s).",
+        CALL2EDS_DIAR_EDGE_ENABLED: "Active correction des micro‑segments aux frontières.",
+        CALL2EDS_DIAR_FLIP_ENABLED: "Active fusion A‑B‑A (même speaker séparé).",
+        CALL2EDS_DIAR_FLIP_MAX_CONF: "Confiance max pour autoriser un flip.",
+        CALL2EDS_DIAR_FLIP_MAX_GAP_S: "Gap max entre segments pour flip (s).",
+        CALL2EDS_DIAR_FLIP_MAX_OV: "Overlap max toléré pour flip.",
+        CALL2EDS_DIAR_FLIP_MAX_S: "Durée max du segment intercalé (s).",
+        CALL2EDS_DIAR_FLIP_MAX_TOKENS: "Nb max de tokens du segment intercalé.",
+        CALL2EDS_DIAR_GLOBAL_FORCE: "Force la re‑segmentation globale sur tout.",
+        CALL2EDS_DIAR_GLOBAL_FRAME_GAP_S: "Gap entre frames pour re‑seg globale (s).",
+        CALL2EDS_DIAR_GLOBAL_MAX_CHANGE: "Changement max autorisé par re‑seg globale.",
+        CALL2EDS_DIAR_GLOBAL_MAX_CONF: "Confiance max pour appliquer re‑seg.",
+        CALL2EDS_DIAR_GLOBAL_MAX_DROP: "Drop max accepté par re‑seg.",
+        CALL2EDS_DIAR_GLOBAL_MAX_OV: "Overlap max pour re‑seg.",
+        CALL2EDS_DIAR_GLOBAL_PROTO_HOP_S: "Pas prototypes global (s).",
+        CALL2EDS_DIAR_GLOBAL_PROTO_SMOOTH: "Lissage prototypes global.",
+        CALL2EDS_DIAR_GLOBAL_PROTO_WIN_S: "Fenêtre prototypes global (s).",
+        CALL2EDS_DIAR_GLOBAL_RESEG: "Active re‑segmentation globale.",
+        CALL2EDS_DIAR_GLOBAL_SHORT_S: "Durée max des micro‑tours ciblés (s).",
+        CALL2EDS_DIAR_GLOBAL_SHORT_TOKENS: "Nb tokens max des micro‑tours ciblés.",
+        CALL2EDS_DIAR_MICRO_REFINE: "Active raffinement micro‑tours.",
+        CALL2EDS_DIAR_MIN_OFF: "Durée min de silence entre tours (s).",
+        CALL2EDS_DIAR_MIN_ON: "Durée min d’un tour (s).",
+        CALL2EDS_DIAR_OVERLAP_MIN: "Seuil min pour marquer overlap.",
+        CALL2EDS_DIAR_OVERLAP_STRICT: "Marquage strict des overlaps.",
+        CALL2EDS_DIAR_PROTO_MAX_OV: "Overlap max pour prototypes.",
+        CALL2EDS_DIAR_PROTO_MAX_PER_SPK: "Nb max de prototypes par speaker.",
+        CALL2EDS_DIAR_PROTO_MIN_CONF: "Confiance min d’un prototype.",
+        CALL2EDS_DIAR_PROTO_MIN_DUR: "Durée min d’un prototype (s).",
+        CALL2EDS_DIAR_PROTO_MIN_S: "Durée min d’un tour pour prototype (s).",
+        CALL2EDS_ECAPA_WIN_S: "Fenêtre ECAPA (s).",
+        CALL2EDS_ECAPA_HOP_S: "Pas ECAPA (s).",
+        CALL2EDS_ECAPA_SMOOTH: "Lissage ECAPA.",
+        CALL2EDS_ECAPA_EARLY_WIN_S: "Fenêtre ECAPA early (s).",
+        CALL2EDS_ECAPA_EARLY_HOP_S: "Pas ECAPA early (s).",
+        CALL2EDS_ECAPA_EARLY_SMOOTH: "Lissage ECAPA early.",
+        CALL2EDS_ECAPA_MICRO_GAP_S: "Gap micro‑tours ECAPA (s).",
+        CALL2EDS_ECAPA_MICRO_MAX_S: "Durée max micro‑tours ECAPA (s).",
+        CALL2EDS_ECAPA_MICRO_MIN_S: "Durée min micro‑tours ECAPA (s).",
+        CALL2EDS_ECAPA_MICRO_EARLY_GAP_S: "Gap micro‑tours early ECAPA (s).",
+        CALL2EDS_ECAPA_MICRO_EARLY_MAX_S: "Durée max micro‑tours early ECAPA (s).",
+        CALL2EDS_ECAPA_MICRO_EARLY_MIN_S: "Durée min micro‑tours early ECAPA (s).",
+        CALL2EDS_ECAPA_MICRO_FORCE_DIVERSITY: "Force diversité micro‑labels ECAPA."
+      },
+      en: {
+        CALL2EDS_MODEL: "Default ASR model (tiny/small/medium/large).",
+        CALL2EDS_LANG: "Default ASR language (auto/fr/en/...).",
+        CALL2EDS_DEVICE: "ASR device (auto/cuda/cpu).",
+        CALL2EDS_COMPUTE_TYPE: "CTranslate2 compute type (int8_float32, float16...).",
+        CALL2EDS_NO_SPEECH_THRESHOLD: "No‑speech threshold (higher = stricter).",
+        CALL2EDS_LOGPROB_THRESHOLD: "Log‑prob threshold to filter noisy segments.",
+        CALL2EDS_VAD_FILTER: "Enable Whisper internal VAD.",
+        CALL2EDS_DIAR_CLUSTER_METHOD: "Embedding clustering method.",
+        CALL2EDS_DIAR_CLUSTER_MIN_SIZE: "Minimum cluster size (speaker).",
+        CALL2EDS_DIAR_CLUSTER_THRESHOLD: "Similarity threshold for merging clusters.",
+        CALL2EDS_DIAR_EARLY_BLOCK_S: "Min initial block for early re‑seg (s).",
+        CALL2EDS_DIAR_EARLY_FORCE: "Force early re‑seg even if confident.",
+        CALL2EDS_DIAR_EARLY_MAX_SPK: "Max speakers in early phase.",
+        CALL2EDS_DIAR_EARLY_PROTO_HOP_S: "Early prototypes hop (s).",
+        CALL2EDS_DIAR_EARLY_PROTO_SMOOTH: "Early prototypes smoothing.",
+        CALL2EDS_DIAR_EARLY_PROTO_WIN_S: "Early prototypes window (s).",
+        CALL2EDS_DIAR_EARLY_WINDOW_S: "Early analysis window (s).",
+        CALL2EDS_DIAR_EDGE_ENABLED: "Enable edge micro‑segment fix.",
+        CALL2EDS_DIAR_FLIP_ENABLED: "Enable A‑B‑A merge (same speaker).",
+        CALL2EDS_DIAR_FLIP_MAX_CONF: "Max confidence to allow a flip.",
+        CALL2EDS_DIAR_FLIP_MAX_GAP_S: "Max gap between segments (s).",
+        CALL2EDS_DIAR_FLIP_MAX_OV: "Max overlap allowed for flip.",
+        CALL2EDS_DIAR_FLIP_MAX_S: "Max middle segment duration (s).",
+        CALL2EDS_DIAR_FLIP_MAX_TOKENS: "Max tokens in middle segment.",
+        CALL2EDS_DIAR_GLOBAL_FORCE: "Force global re‑seg on all.",
+        CALL2EDS_DIAR_GLOBAL_FRAME_GAP_S: "Frame gap for global re‑seg (s).",
+        CALL2EDS_DIAR_GLOBAL_MAX_CHANGE: "Max change allowed by re‑seg.",
+        CALL2EDS_DIAR_GLOBAL_MAX_CONF: "Max confidence to apply re‑seg.",
+        CALL2EDS_DIAR_GLOBAL_MAX_DROP: "Max drop accepted by re‑seg.",
+        CALL2EDS_DIAR_GLOBAL_MAX_OV: "Max overlap for re‑seg.",
+        CALL2EDS_DIAR_GLOBAL_PROTO_HOP_S: "Global prototypes hop (s).",
+        CALL2EDS_DIAR_GLOBAL_PROTO_SMOOTH: "Global prototypes smoothing.",
+        CALL2EDS_DIAR_GLOBAL_PROTO_WIN_S: "Global prototypes window (s).",
+        CALL2EDS_DIAR_GLOBAL_RESEG: "Enable global re‑segmentation.",
+        CALL2EDS_DIAR_GLOBAL_SHORT_S: "Max duration of short turns (s).",
+        CALL2EDS_DIAR_GLOBAL_SHORT_TOKENS: "Max tokens of short turns.",
+        CALL2EDS_DIAR_MICRO_REFINE: "Enable micro‑turn refinement.",
+        CALL2EDS_DIAR_MIN_OFF: "Min silence between turns (s).",
+        CALL2EDS_DIAR_MIN_ON: "Min turn duration (s).",
+        CALL2EDS_DIAR_OVERLAP_MIN: "Min threshold to tag overlap.",
+        CALL2EDS_DIAR_OVERLAP_STRICT: "Strict overlap tagging.",
+        CALL2EDS_DIAR_PROTO_MAX_OV: "Max overlap for prototypes.",
+        CALL2EDS_DIAR_PROTO_MAX_PER_SPK: "Max prototypes per speaker.",
+        CALL2EDS_DIAR_PROTO_MIN_CONF: "Min prototype confidence.",
+        CALL2EDS_DIAR_PROTO_MIN_DUR: "Min prototype duration (s).",
+        CALL2EDS_DIAR_PROTO_MIN_S: "Min turn duration for prototype (s).",
+        CALL2EDS_ECAPA_WIN_S: "ECAPA window (s).",
+        CALL2EDS_ECAPA_HOP_S: "ECAPA hop (s).",
+        CALL2EDS_ECAPA_SMOOTH: "ECAPA smoothing.",
+        CALL2EDS_ECAPA_EARLY_WIN_S: "ECAPA early window (s).",
+        CALL2EDS_ECAPA_EARLY_HOP_S: "ECAPA early hop (s).",
+        CALL2EDS_ECAPA_EARLY_SMOOTH: "ECAPA early smoothing.",
+        CALL2EDS_ECAPA_MICRO_GAP_S: "ECAPA micro‑turn gap (s).",
+        CALL2EDS_ECAPA_MICRO_MAX_S: "ECAPA micro‑turn max duration (s).",
+        CALL2EDS_ECAPA_MICRO_MIN_S: "ECAPA micro‑turn min duration (s).",
+        CALL2EDS_ECAPA_MICRO_EARLY_GAP_S: "ECAPA early micro‑turn gap (s).",
+        CALL2EDS_ECAPA_MICRO_EARLY_MAX_S: "ECAPA early micro‑turn max duration (s).",
+        CALL2EDS_ECAPA_MICRO_EARLY_MIN_S: "ECAPA early micro‑turn min duration (s).",
+        CALL2EDS_ECAPA_MICRO_FORCE_DIVERSITY: "Force ECAPA micro‑label diversity."
+      }
+    };
+
+    function infoOverride(key) {
+      const lang = currentLang || "fr";
+      const map = INFO_MAP[lang] || INFO_MAP.fr;
+      if (map && map[key]) return map[key];
+      if (key && key.startsWith("CALL2EDS_DIAR_")) {
+        return lang === "en" ? "Advanced diarization setting (see README)." : "Réglage diarisation avancé (voir README).";
+      }
+      if (key && key.startsWith("CALL2EDS_ECAPA_")) {
+        return lang === "en" ? "ECAPA embeddings setting (see README)." : "Réglage embeddings ECAPA (voir README).";
+      }
+      if (key && key.startsWith("CALL2EDS_")) {
+        return lang === "en" ? "Runtime setting (see README)." : "Paramètre runtime (voir README).";
+      }
+      return "";
+    }
+
+    function buildConfigRow(key = "", value = "", meta = {}) {
+      const d = dict();
+      const tr = document.createElement("tr");
+      const tdKey = document.createElement("td");
+      const tdVal = document.createElement("td");
+      const tdInfo = document.createElement("td");
+
+      const keyInput = document.createElement("input");
+      keyInput.value = key;
+      keyInput.placeholder = "CALL2EDS_DIAR_...";
+      tdKey.appendChild(keyInput);
+
+      let valInput;
+      if (meta.type === "select" && Array.isArray(meta.choices)) {
+        valInput = document.createElement("select");
+        meta.choices.forEach((choice) => {
+          const opt = document.createElement("option");
+          opt.value = choice;
+          opt.textContent = choice;
+          if (choice === value) opt.selected = true;
+          valInput.appendChild(opt);
+        });
+      } else if (meta.type === "bool") {
+        valInput = document.createElement("select");
+        ["", "true", "false"].forEach((choice) => {
+          const opt = document.createElement("option");
+          opt.value = choice;
+          opt.textContent = choice === "" ? "auto" : choice;
+          if (choice === value) opt.selected = true;
+          valInput.appendChild(opt);
+        });
+      } else {
+        valInput = document.createElement("input");
+        valInput.value = value || "";
+        if (meta.type === "number") valInput.type = "number";
+        if (meta.placeholder || meta.hint) {
+          valInput.placeholder = meta.placeholder || meta.hint;
+        }
+      }
+      tdVal.appendChild(valInput);
+
+      const label = infoOverride(key) || meta.label || (key ? "n/a" : d.custom_var);
+      const span = document.createElement("span");
+      span.className = "note";
+      span.textContent = label;
+      tdInfo.appendChild(span);
+      if (meta.hint) {
+        const hint = document.createElement("span");
+        hint.className = "muted";
+        hint.textContent = meta.hint;
+        tdInfo.appendChild(hint);
+      }
+
+      tr.appendChild(tdKey);
+      tr.appendChild(tdVal);
+      tr.appendChild(tdInfo);
+      tr.dataset.configRow = "1";
+      return tr;
+    }
+
+    function renderSystem(data) {
+      const d = dict();
+      const cpu = document.getElementById("sys-cpu");
+      const ram = document.getElementById("sys-ram");
+      const disk = document.getElementById("sys-disk");
+      const gpu = document.getElementById("sys-gpu");
+      if (!data) {
+        cpu.textContent = d.api_ko;
+        ram.textContent = d.api_ko;
+        disk.textContent = d.api_ko;
+        gpu.textContent = d.api_ko;
+        const gpuNote = document.getElementById("gpu-note");
+        if (gpuNote) gpuNote.textContent = d.api_ko;
+        return;
+      }
+      cpu.textContent = formatCpu(data.cpu);
+      ram.textContent = formatRam(data.ram);
+      disk.textContent = formatDisk(data.disk);
+      gpu.textContent = formatGpu(data.gpu);
+    }
+
+    function renderGpuNote(systemData, configData) {
+      const d = dict();
+      const gpuNote = document.getElementById("gpu-note");
+      if (!gpuNote) return;
+      if (!systemData || !systemData.gpu) {
+        gpuNote.textContent = d.api_ko;
+        return;
+      }
+      const device = (configData?.values?.["CALL2EDS_DEVICE"] || "auto").toLowerCase();
+      if (systemData.gpu.available && (device === "" || device === "auto" || device === "cuda")) {
+        gpuNote.textContent = d.gpu_note_auto;
+      } else if (systemData.gpu.available) {
+        gpuNote.textContent = format(d.gpu_note_device, { device: device || "auto" });
+      } else {
+        gpuNote.textContent = d.gpu_note_none;
+      }
+    }
+
+    async function loadSystem() {
+      try {
+        const data = await fetchJson("/api/system");
+        lastSystem = data;
+        renderSystem(data);
+        return data;
+      } catch (err) {
+        lastSystem = null;
+        renderSystem(null);
+        return null;
+      }
+    }
+
+    function renderConfigTable(data) {
+      const tableBody = document.querySelector("#config-table tbody");
+      tableBody.innerHTML = "";
+      data.keys.forEach((key) => {
+        const meta = data.meta && data.meta[key] ? data.meta[key] : {};
+        const value = data.values[key] || "";
+        tableBody.appendChild(buildConfigRow(key, value, meta));
+      });
+    }
+
+    async function loadConfig() {
+      const data = await fetchJson("/api/config");
+      lastConfig = data;
+      renderConfigTable(data);
+      return data;
+    }
+
+    function collectUpdates() {
+      const updates = [];
+      document.querySelectorAll("tr[data-config-row]").forEach((row) => {
+        const keyInput = row.querySelector("td:nth-child(1) input");
+        const valInput = row.querySelector("td:nth-child(2) input, td:nth-child(2) select");
+        const key = keyInput ? keyInput.value.trim() : "";
+        if (!key) return;
+        const value = valInput ? valInput.value : "";
+        updates.push({ key, value });
+      });
+      return updates;
+    }
+
+    function renderConfigSummary(configData) {
+      const d = dict();
+      const summary = document.getElementById("config-summary");
+      if (!summary || !configData) return;
+      const persistInfo = configData.persist_supported
+        ? format(d.persist_info, { path: configData.persist_path })
+        : d.persist_unavailable;
+      summary.textContent = format(d.config_summary, {
+        model: configData.default_model,
+        lang: configData.default_lang,
+        persist: persistInfo,
+      });
+    }
+
+    async function initConfigEditor() {
+      const systemPromise = loadSystem();
+      const configData = await loadConfig();
+      const systemData = await systemPromise;
+
+      const persistToggle = document.getElementById("persist-config");
+      if (persistToggle && configData.persist_supported) {
+        persistToggle.checked = true;
+      }
+      renderConfigSummary(configData);
+      if (persistToggle && !configData.persist_supported) {
+        persistToggle.checked = false;
+        persistToggle.disabled = true;
+      }
+      renderGpuNote(systemData, configData);
+    }
+
+    document.getElementById("add-config").addEventListener("click", (e) => {
+      e.preventDefault();
+      const tableBody = document.querySelector("#config-table tbody");
+      tableBody.appendChild(buildConfigRow("", "", {}));
+    });
+
+    document.getElementById("save-config").addEventListener("click", async (e) => {
+      e.preventDefault();
+      const d = dict();
+      const status = document.getElementById("save-status");
+      status.textContent = d.save_start;
+      try {
+        const updates = collectUpdates();
+        const persist = document.getElementById("persist-config").checked;
+        await fetchJson("/api/config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ updates, persist }),
+        });
+        status.textContent = d.save_ok;
+        const cfg = await loadConfig();
+        renderConfigSummary(cfg);
+        renderGpuNote(lastSystem, cfg);
+      } catch (err) {
+        status.textContent = format(d.save_error, { err: err.message });
+      }
+    });
+
+    document.getElementById("restart-app").addEventListener("click", async (e) => {
+      e.preventDefault();
+      const d = dict();
+      const status = document.getElementById("restart-status");
+      status.textContent = d.restart_start;
+      try {
+        await fetchJson("/api/system/restart", { method: "POST" });
+        status.textContent = d.restart_ok;
+      } catch (err) {
+        status.textContent = format(d.restart_error, { err: err.message });
+      }
+    });
+
+    function loadStrings() {
+      return fetch("/static/i18n/app.json")
+        .then((r) => {
+          if (!r.ok) throw new Error("i18n load failed");
+          return r.json();
+        })
+        .then((data) => {
+          STRINGS = data.diagnostic;
+        });
+    }
+
+    loadStrings()
+      .then(() => {
+        if (uiLang) {
+          uiLang.value = storedLang;
+          uiLang.addEventListener("change", async () => {
+            const lang = uiLang.value || "fr";
+            localStorage.setItem("call2eds_ui_lang", lang);
+            currentLang = lang;
+            applyLanguage(lang);
+            if (lastSystem) renderSystem(lastSystem);
+            if (lastConfig) {
+              renderConfigTable(lastConfig);
+              renderConfigSummary(lastConfig);
+            }
+            renderGpuNote(lastSystem, lastConfig);
+          });
+        }
+        applyLanguage(storedLang);
+        applyMinioSetting();
+        initConfigEditor();
+        loadModels();
+        loadHfTokenStatus();
+      })
+      .catch(() => {
+        document.documentElement.lang = storedLang;
+        loadModels();
+        loadHfTokenStatus();
+      });
+
+    const minioApply = document.getElementById("minioUrlApply");
+    if (minioApply) {
+      minioApply.addEventListener("click", () => {
+        const input = document.getElementById("minioUrlInput");
+        if (!input) return;
+        const value = input.value.trim();
+        if (value) {
+          localStorage.setItem("call2eds_minio_url", value);
+        } else {
+          localStorage.removeItem("call2eds_minio_url");
+        }
+        applyMinioSetting();
+      });
+    }
+
+    const hfSave = document.getElementById("hfTokenSave");
+    if (hfSave) {
+      hfSave.addEventListener("click", async () => {
+        const input = document.getElementById("hfTokenInput");
+        const persist = document.getElementById("persist-config");
+        if (!input) return;
+        try {
+          await fetchJson("/api/hf-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: input.value, persist: !!persist?.checked }),
+          });
+          input.value = "";
+          loadHfTokenStatus();
+        } catch (err) {
+          const status = document.getElementById("hfTokenStatus");
+          if (status) status.textContent = format(dict().hf_token_error || "Erreur: {err}", { err: err.message });
+        }
+      });
+    }
+
+    const hfClear = document.getElementById("hfTokenClear");
+    if (hfClear) {
+      hfClear.addEventListener("click", async () => {
+        try {
+          await fetchJson("/api/hf-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token: "", persist: true }),
+          });
+          loadHfTokenStatus();
+        } catch (err) {
+          const status = document.getElementById("hfTokenStatus");
+          if (status) status.textContent = format(dict().hf_token_error || "Erreur: {err}", { err: err.message });
+        }
+      });
+    }
+  </script>
+</body>
+</html>

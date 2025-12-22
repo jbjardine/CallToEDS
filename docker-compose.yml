@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: call2eds
+      POSTGRES_PASSWORD: call2eds
+      POSTGRES_DB: call2eds
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-call2eds}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-call2edssecret}
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - miniostore:/data
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-call2eds}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-call2edssecret}
+    entrypoint: >-
+      /bin/sh -c "
+      until (/usr/bin/mc alias set local http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD) do echo 'waiting for minio' && sleep 3; done;
+      /usr/bin/mc mb -p local/call2eds || true;
+      /usr/bin/mc anonymous set download local/call2eds;
+      "
+
+  hf-cache-init:
+    image: busybox:latest
+    command: sh -c "mkdir -p /cache/hf && chown -R 1000:1000 /cache/hf"
+    volumes:
+      - hf_cache:/cache/hf
+
+  app:
+    build: .
+    depends_on:
+      - postgres
+      - minio-init
+      - hf-cache-init
+    env_file:
+      - .env.secrets
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://call2eds:call2eds@postgres:5432/call2eds
+      MINIO_ENDPOINT: minio:9000
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT}
+      MINIO_CONSOLE_PUBLIC_ENDPOINT: ${MINIO_CONSOLE_PUBLIC_ENDPOINT:-}
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-call2eds}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-call2edssecret}
+      MINIO_BUCKET: call2eds
+      MINIO_SECURE: "false"
+      LOG_LEVEL: INFO
+      CALL2EDS_WEB_HOST: 0.0.0.0
+      CALL2EDS_WEB_PORT: 8000
+      CALL2EDS_AUTH_ENABLED: ${CALL2EDS_AUTH_ENABLED:-false}
+      CALL2EDS_AUTH_TTL: ${CALL2EDS_AUTH_TTL:-28800}
+      CALL2EDS_AUTH_SECRET: ${CALL2EDS_AUTH_SECRET:-}
+      CALL2EDS_MAX_SPK: "6"
+      CALL2EDS_PITCH_BACKEND: ${CALL2EDS_PITCH_BACKEND:-parselmouth}
+      CALL2EDS_PITCH_FLOOR: ${CALL2EDS_PITCH_FLOOR:-50}
+      CALL2EDS_PITCH_CEIL: ${CALL2EDS_PITCH_CEIL:-500}
+      CALL2EDS_NO_SPEECH_THRESHOLD: ${CALL2EDS_NO_SPEECH_THRESHOLD:-0.9}
+      CALL2EDS_LOGPROB_THRESHOLD: ${CALL2EDS_LOGPROB_THRESHOLD:--1.0}
+      CALL2EDS_VAD_FILTER: ${CALL2EDS_VAD_FILTER:-false}
+      CALL2EDS_DIAR_MIN_OFF: ${CALL2EDS_DIAR_MIN_OFF:-}
+      CALL2EDS_DIAR_CLUSTER_THRESHOLD: ${CALL2EDS_DIAR_CLUSTER_THRESHOLD:-}
+      CALL2EDS_DIAR_CLUSTER_METHOD: ${CALL2EDS_DIAR_CLUSTER_METHOD:-}
+      CALL2EDS_DIAR_CLUSTER_MIN_SIZE: ${CALL2EDS_DIAR_CLUSTER_MIN_SIZE:-}
+      CALL2EDS_DIAR_OVERLAP_STRICT: ${CALL2EDS_DIAR_OVERLAP_STRICT:-1}
+      CALL2EDS_DIAR_OVERLAP_MIN: ${CALL2EDS_DIAR_OVERLAP_MIN:-0.25}
+      HUGGINGFACE_HUB_CACHE: /cache/hf
+      PYTHONPATH: /workspace/src
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+      - hf_cache:/cache/hf
+    # entrypoint = call2eds (Dockerfile). On lance le sous-commande web.
+    command: ["web", "--host", "0.0.0.0", "--port", "8000"]
+
+volumes:
+  pgdata:
+  miniostore:
+  hf_cache:
