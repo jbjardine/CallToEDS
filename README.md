@@ -106,9 +106,6 @@ calls/{call_id}/runs/{run_id}/manifest.json
 - Modeles lourds: utiliser `tiny` ou `small`.
 - Pyannote gated: accepter conditions HF + `HF_TOKEN`.
 
-### Release
-- Tagger une version: `git tag v0.1.9 && git push origin v0.1.9`
-- La CI genere une release GitHub + un tarball `call2eds-v0.1.9.tar.gz`.
 
 ---
 
@@ -182,9 +179,6 @@ See French section (paths and tables identical).
 - Diarization: pyannote with HF_TOKEN or SpeechBrain fallback.
 - Inputs validated server-side. Never trust the input.
 
-### Release
-- Tag a version: `git tag v0.1.9 && git push origin v0.1.9`
-- CI creates a GitHub release + a `call2eds-v0.1.9.tar.gz` tarball.
 
 ---
 
@@ -197,6 +191,14 @@ Not a fork. Built with open-source components including:
 - FastAPI, MinIO, Postgres
 
 Please review upstream licenses before redistribution.
+
+## Security
+See `SECURITY.md` for the vulnerability disclosure policy.
+
+## Disclaimer
+FR: Ce projet est un outil technique. Il ne remplace pas un avis medical, ne doit pas etre utilise pour des decisions cliniques ou d'urgence, et n'offre aucune garantie de fiabilite sans validation locale.
+
+EN: This project is a technical tool. It does not replace medical advice, must not be used for clinical or emergency decisions, and provides no reliability guarantee without local validation.
 
 ## License
 MIT (see `pyproject.toml`).
