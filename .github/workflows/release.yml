@@ -21,6 +21,14 @@ jobs:
           tar_name="call2eds-${tag_name}.tar.gz"
           git archive --format=tar.gz --prefix=call2eds/ "${tag_name}" > "${tar_name}"
           echo "TARBALL=${tar_name}" >> "$GITHUB_ENV"
+          echo "TAG_NAME=${tag_name}" >> "$GITHUB_ENV"
+
+      - name: Build Docker image tarball
+        run: |
+          image_name="call2eds:${TAG_NAME}"
+          docker build -t "${image_name}" .
+          docker save "${image_name}" | gzip > "call2eds-${TAG_NAME}.docker.tar.gz"
+          echo "DOCKER_TARBALL=call2eds-${TAG_NAME}.docker.tar.gz" >> "$GITHUB_ENV"
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
@@ -28,3 +36,4 @@ jobs:
           generate_release_notes: true
           files: |
             ${{ env.TARBALL }}
+            ${{ env.DOCKER_TARBALL }}
