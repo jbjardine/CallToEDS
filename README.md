@@ -196,9 +196,9 @@ Please review upstream licenses before redistribution.
 See `SECURITY.md` for the vulnerability disclosure policy.
 
 ## Disclaimer
-FR: Ce projet est un outil technique. Il ne remplace pas un avis medical, ne doit pas etre utilise pour des decisions cliniques ou d'urgence, et n'offre aucune garantie de fiabilite sans validation locale.
+FR: Ce projet est un outil technique. Il ne remplace pas un avis medical, ne doit pas etre utilise pour des decisions cliniques ou d'urgence, et n'offre aucune garantie de fiabilite sans validation locale. Il n'est pas un dispositif medical. Il est fourni "en l'etat", sans garantie, et son usage est sous la seule responsabilite de l'utilisateur. Il est construit pour aider la recherche libre et gratuite.
 
-EN: This project is a technical tool. It does not replace medical advice, must not be used for clinical or emergency decisions, and provides no reliability guarantee without local validation.
+EN: This project is a technical tool. It does not replace medical advice, must not be used for clinical or emergency decisions, and provides no reliability guarantee without local validation. It is not a medical device. It is provided "as is", without warranty, and use is at the user's sole responsibility. It is built to support free and open research.
 
 ## License
 MIT (see `pyproject.toml`).
