@@ -1,5 +1,9 @@
 # Call2EDS
 
+[![Release](https://img.shields.io/github/v/release/jbjardine/CallToESD)](https://github.com/jbjardine/CallToESD/releases)
+[![Release CI](https://github.com/jbjardine/CallToESD/actions/workflows/release.yml/badge.svg)](https://github.com/jbjardine/CallToESD/actions/workflows/release.yml)
+[![License](https://img.shields.io/github/license/jbjardine/CallToESD)](https://github.com/jbjardine/CallToESD/blob/main/LICENSE)
+
 Call2EDS transforme un appel audio en paquet EDS (Entrepot de Donnees de Sante) pret pour l’IA.
 Le nom est un clin d’oeil bilingue: “call to EDS” en anglais et “appel vers l’EDS” en francais.
 Bref, on passe du call au data warehouse.
