@@ -12,6 +12,7 @@ Bref, on passe du call au data warehouse.
 This repo turns phone calls into EDS-ready training packages.
 The name is a bilingual wink: “call to EDS” in English and “appel vers l’EDS” in French.
 In short, it bridges the call and the data warehouse.
+
 <br/>
 If this project is useful to you, you can support its development here:
 
