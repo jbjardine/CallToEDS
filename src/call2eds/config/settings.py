@@ -10,8 +10,8 @@ class Settings:
         self.minio_endpoint = os.getenv("MINIO_ENDPOINT", "localhost:9000")
         # endpoint externe pour les liens de téléchargement (ex: http://localhost:9000)
         self.minio_public_endpoint = os.getenv("MINIO_PUBLIC_ENDPOINT", f"http://{self.minio_endpoint}")
-        self.minio_access_key = os.getenv("MINIO_ACCESS_KEY", "call2eds")
-        self.minio_secret_key = os.getenv("MINIO_SECRET_KEY", "call2edssecret")
+        self.minio_access_key = os.getenv("MINIO_ACCESS_KEY", "")
+        self.minio_secret_key = os.getenv("MINIO_SECRET_KEY", "")
         self.minio_bucket = os.getenv("MINIO_BUCKET", "call2eds")
         self.minio_secure = os.getenv("MINIO_SECURE", "false").lower() == "true"
         self.call2eds_model = os.getenv("CALL2EDS_MODEL", "small")

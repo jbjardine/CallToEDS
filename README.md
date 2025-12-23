@@ -47,6 +47,8 @@ git clone <repo>
 cd <repo>
 cp .env.example .env
 
+# IMPORTANT: mettez vos credentials (MinIO/Postgres/Auth/HF) dans .env avant de lancer.
+
 docker compose up -d
 # Ingestion rapide
 docker compose run --rm app ingest /path/to/audio.wav --call-id DEMO001
@@ -154,6 +156,8 @@ The goal is a stable, trainable format for downstream ML.
 git clone <repo>
 cd <repo>
 cp .env.example .env
+
+# IMPORTANT: set your credentials (MinIO/Postgres/Auth/HF) in .env before starting.
 
 docker compose up -d
 # Ingest
