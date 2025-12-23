@@ -48,6 +48,7 @@ cd <repo>
 cp .env.example .env
 
 # IMPORTANT: mettez vos credentials (MinIO/Postgres/Auth/HF) dans .env avant de lancer.
+# L'application refusera de demarrer si des valeurs CHANGE_ME sont presentes.
 
 docker compose up -d
 # Ingestion rapide
@@ -158,6 +159,7 @@ cd <repo>
 cp .env.example .env
 
 # IMPORTANT: set your credentials (MinIO/Postgres/Auth/HF) in .env before starting.
+# The app will refuse to start if CHANGE_ME values remain.
 
 docker compose up -d
 # Ingest

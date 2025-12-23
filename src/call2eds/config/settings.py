@@ -22,6 +22,16 @@ class Settings:
         self.auth_enabled = os.getenv("CALL2EDS_AUTH_ENABLED", "false").lower() == "true"
         self.auth_secret = os.getenv("CALL2EDS_AUTH_SECRET", "")
         self.auth_ttl_s = int(os.getenv("CALL2EDS_AUTH_TTL", "28800"))
+        self._validate_required_secrets()
+
+    def _validate_required_secrets(self) -> None:
+        required = {
+            "MINIO_ACCESS_KEY": self.minio_access_key,
+            "MINIO_SECRET_KEY": self.minio_secret_key,
+        }
+        bad = [k for k, v in required.items() if not v or str(v).strip().upper() == "CHANGE_ME"]
+        if bad:
+            raise ValueError(f"Missing required env values: {', '.join(bad)}")
 
 
 @lru_cache
