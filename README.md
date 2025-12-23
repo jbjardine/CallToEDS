@@ -4,10 +4,6 @@
 [![Release CI](https://github.com/jbjardine/CallToESD/actions/workflows/release.yml/badge.svg)](https://github.com/jbjardine/CallToESD/actions/workflows/release.yml)
 [![GHCR](https://img.shields.io/badge/ghcr.io-jbjardine%2Fcall2eds-1f2937)](https://github.com/jbjardine/CallToEDS/pkgs/container/call2eds)
 [![License](https://img.shields.io/github/license/jbjardine/CallToESD)](https://github.com/jbjardine/CallToESD/blob/main/LICENSE)
-<br/>
-If this project is useful to you, you can support its development here:
-
-[![Support](https://img.shields.io/badge/Support-Buy%20Me%20a%20Coffee-1f2937)](https://www.buymeacoffee.com/jbjardine)
 
 Call2EDS transforme un appel audio en paquet EDS (Entrepot de Donnees de Sante) pret pour l’IA.
 Le nom est un clin d’oeil bilingue: “call to EDS” en anglais et “appel vers l’EDS” en francais.
@@ -16,6 +12,10 @@ Bref, on passe du call au data warehouse.
 This repo turns phone calls into EDS-ready training packages.
 The name is a bilingual wink: “call to EDS” in English and “appel vers l’EDS” in French.
 In short, it bridges the call and the data warehouse.
+<br/>
+If this project is useful to you, you can support its development here:
+
+[![Support](https://img.shields.io/badge/Support-Buy%20Me%20a%20Coffee-1f2937)](https://www.buymeacoffee.com/jbjardine)
 
 ---
 
