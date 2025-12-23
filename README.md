@@ -17,6 +17,12 @@ This repo turns phone calls into EDS-ready training packages.
 The name is a bilingual wink: “call to EDS” in English and “appel vers l’EDS” in French.
 In short, it bridges the call and the data warehouse.
 
+Pitch FR: De l'appel brut au paquet EDS pret a entrainer, en quelques minutes.
+Pitch EN: From raw calls to model-ready EDS packages in minutes.
+
+Tags (FR): ASR, diarisation, prosodie, pipeline audio, call center, sante, data engineering, MLOps, FastAPI, MinIO, Postgres, open source.
+Tags (EN): speech-to-text, diarization, prosody, audio pipeline, call center, healthcare, data engineering, MLOps, FastAPI, MinIO, Postgres, open source.
+
 ---
 
 ## Francais
