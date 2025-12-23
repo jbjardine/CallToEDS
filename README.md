@@ -55,6 +55,19 @@ docker compose run --rm app show DEMO001
 docker compose run --rm app export DEMO001 --out ./out
 ```
 
+### Installation depuis une release
+- Tarball source: telecharger `call2eds-vX.Y.Z.tar.gz` depuis GitHub Releases, puis:
+```
+tar -xzf call2eds-vX.Y.Z.tar.gz
+cd call2eds
+cp .env.example .env
+docker compose up -d
+```
+- Image Docker (GHCR):
+```
+docker pull ghcr.io/jbjardine/call2eds:vX.Y.Z
+```
+
 ### Interface Web & API
 - UI: http://localhost:8000
 - Swagger: http://localhost:8000/docs
@@ -148,6 +161,19 @@ docker compose run --rm app ingest /path/to/audio.wav --call-id DEMO001
 docker compose run --rm app show DEMO001
 # Export artifacts
 docker compose run --rm app export DEMO001 --out ./out
+```
+
+### Install from a release
+- Source tarball: download `call2eds-vX.Y.Z.tar.gz` from GitHub Releases, then:
+```
+tar -xzf call2eds-vX.Y.Z.tar.gz
+cd call2eds
+cp .env.example .env
+docker compose up -d
+```
+- Docker image (GHCR):
+```
+docker pull ghcr.io/jbjardine/call2eds:vX.Y.Z
 ```
 
 ### Web UI & API
